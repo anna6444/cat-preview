@@ -16,32 +16,76 @@
     align-items: center;
     justify-content: center;
     overflow-x: hidden;
+    perspective: 1000px;
   }
   .card {
     background: #fff;
     border-radius: 24px;
     padding: 24px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.08);
     width: 100%;
     max-width: 400px;
     text-align: center;
     position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease;
   }
   .cat-wrap {
     position: relative;
     width: 100%;
-    height: 300px;
+    height: 320px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 20px;
+    transform-style: preserve-3d;
+  }
+  .cat-wrap::after {
+    content: '';
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50%;
+    height: 14px;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.18), rgba(0,0,0,0) 70%);
+    border-radius: 50%;
+    animation: shadowBreath 3s ease-in-out infinite;
+    z-index: 0;
+  }
+  @keyframes shadowBreath {
+    0%, 100% { width: 50%; opacity: 0.5; }
+    50% { width: 45%; opacity: 0.3; }
   }
   .cat-img {
+    position: relative;
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
+    z-index: 1;
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    animation: breathe 3s ease-in-out infinite;
+    animation: float3D 4s ease-in-out infinite;
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.12));
+    cursor: pointer;
+    will-change: transform;
+  }
+  @keyframes float3D {
+    0%, 100% {
+      transform: translateY(0) rotateX(0deg) rotateY(0deg) scale(1);
+    }
+    25% {
+      transform: translateY(-6px) rotateX(2deg) rotateY(-3deg) scale(1.01);
+    }
+    50% {
+      transform: translateY(-10px) rotateX(0deg) rotateY(0deg) scale(1.02);
+    }
+    75% {
+      transform: translateY(-6px) rotateX(-2deg) rotateY(3deg) scale(1.01);
+    }
+  }
+  .cat-img:active {
+    transform: scale(0.96) translateY(2px);
+    transition: transform 0.1s;
   }
   .cat-img.bounce {
     animation: bounce 0.6s ease;
@@ -49,24 +93,21 @@
   .cat-img.shake {
     animation: shake 0.5s ease;
   }
-  @keyframes breathe {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-  }
   @keyframes bounce {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.15) translateY(-10px); }
+    0%, 100% { transform: scale(1) translateY(0); }
+    50% { transform: scale(1.15) translateY(-15px); }
   }
   @keyframes shake {
     0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
+    25% { transform: translateX(-6px) rotateZ(-2deg); }
+    75% { transform: translateX(6px) rotateZ(2deg); }
   }
   .cat-title {
     font-size: 20px;
     font-weight: bold;
     color: #4b7f23;
     margin: 10px 0;
+    transform: translateZ(30px);
   }
   .agent-bubble {
     position: fixed;
@@ -76,7 +117,7 @@
     border: 2px solid #fde68a;
     border-radius: 20px;
     padding: 12px 16px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
     max-width: 200px;
     font-size: 14px;
     color: #92400e;
@@ -139,13 +180,12 @@
   </div>
 </div>
 
-<!-- 智能体气泡 -->
 <div id="agentBubble" class="agent-bubble">喵～小橘在睡觉呢～</div>
+
 <script>
   const catImg = document.getElementById('catImg');
   const agentBubble = document.getElementById('agentBubble');
 
-  // 状态映射表：状态 -> 图片文件 + 智能体提示语
   const catStates = {
     normal: {
       img: 'cat-stage-1-normal.png',
@@ -174,7 +214,6 @@
     }
   };
 
-  // ============ 预加载：页面打开时后台静默下载所有图片 ============
   const preloadedImages = {};
   function preloadAllImages() {
     Object.keys(catStates).forEach(key => {
@@ -185,26 +224,21 @@
   }
   preloadAllImages();
 
-  // 切换状态
   function setCatState(state) {
     const config = catStates[state];
     if (!config) return;
 
-    // 1. 换图片（预加载过，会瞬间显示）
     catImg.src = config.img;
 
-    // 2. 换动画
     catImg.classList.remove('bounce', 'shake');
     void catImg.offsetWidth;
     catImg.classList.add(config.anim);
 
-    // 3. 更新智能体气泡文字
     agentBubble.innerText = config.text;
     agentBubble.style.animation = 'none';
     void agentBubble.offsetWidth;
     agentBubble.style.animation = 'popIn 0.3s ease';
 
-    // 4. 自动复位
     if (state === 'fed' || state === 'warm') {
       clearTimeout(window.autoResetTimer);
       window.autoResetTimer = setTimeout(() => {
@@ -213,7 +247,6 @@
     }
   }
 </script>
-
 
 </body>
 </html>
