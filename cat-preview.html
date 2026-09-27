@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🐱 养猫预览</title>
+<style>
+  body {
+    margin: 0;
+    padding: 20px;
+    background: linear-gradient(180deg, #fdfbf7 0%, #f4f9f9 100%);
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+  }
+  .card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    position: relative;
+  }
+  .cat-wrap {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .cat-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: breathe 3s ease-in-out infinite;
+  }
+  .cat-img.bounce {
+    animation: bounce 0.6s ease;
+  }
+  .cat-img.shake {
+    animation: shake 0.5s ease;
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+  }
+  @keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15) translateY(-10px); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  .cat-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #4b7f23;
+    margin: 10px 0;
+  }
+  .agent-bubble {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #fff;
+    border: 2px solid #fde68a;
+    border-radius: 20px;
+    padding: 12px 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    max-width: 200px;
+    font-size: 14px;
+    color: #92400e;
+    font-weight: bold;
+    animation: popIn 0.3s ease;
+    z-index: 100;
+  }
+  .agent-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    right: 20px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid #fff;
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  .btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .btn:active { transform: scale(0.95); }
+  .btn-normal { background: #e5e7eb; color: #333; }
+  .btn-hungry { background: #fee2e2; color: #b91c1c; }
+  .btn-cold { background: #dbeafe; color: #1d4ed8; }
+  .btn-fed { background: #dcfce7; color: #15803d; }
+  .btn-warm { background: #fffbeb; color: #92400e; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="cat-title">我的猫「小橘」· 阶段 1</div>
+  <div class="cat-wrap">
+    <img id="catImg" class="cat-img" src="cat-stage-1-normal.png" alt="猫咪">
+  </div>
+  <div class="controls">
+    <button class="btn btn-normal" onclick="setCatState('normal')">😴 正常休息</button>
+    <button class="btn btn-hungry" onclick="setCatState('hungry')">🍼 饿了找奶</button>
+    <button class="btn btn-cold" onclick="setCatState('cold')">🧣 冷了要毯子</button>
+    <button class="btn btn-fed" onclick="setCatState('fed')">🍖 喂奶成功</button>
+    <button class="btn btn-warm" onclick="setCatState('warm')">☀️ 盖毯子保暖</button>
+  </div>
+</div>
+
+<!-- 智能体气泡 -->
+<div id="agentBubble" class="agent-bubble">喵～小橘在睡觉呢～</div>
+
+<script>
+  const catImg = document.getElementById('catImg');
+  const agentBubble = document.getElementById('agentBubble');
+
+  // 状态映射表：状态 -> 图片文件 + 智能体提示语
+  const catStates = {
+    normal: {
+      img: 'cat-stage-1-normal.png',
+      text: '喵～小橘在睡觉呢～',
+      anim: 'breathe'
+    },
+    hungry: {
+      img: 'cat-stage-1-hungry.png',
+      text: '喵～我饿了，想喝奶🍼',
+      anim: 'shake'
+    },
+    cold: {
+      img: 'cat-stage-1-cold.png',
+      text: '喵～我冷了，要小毯子🧣',
+      anim: 'shake'
+    },
+    fed: {
+      img: 'cat-stage-1-fed.png',
+      text: '咕嘟咕嘟～好喝！',
+      anim: 'bounce'
+    },
+    warm: {
+      img: 'cat-stage-1-warm.png',
+      text: '暖暖的，好舒服～',
+      anim: 'bounce'
+    }
+  };
+
+  // 切换状态
+  function setCatState(state) {
+    const config = catStates[state];
+    if (!config) return;
+
+    // 1. 换图片
+    catImg.src = config.img;
+
+    // 2. 换动画
+    catImg.classList.remove('bounce', 'shake');
+    void catImg.offsetWidth; // 重置 CSS 动画
+    catImg.classList.add(config.anim);
+
+    // 3. 更新智能体气泡文字
+    agentBubble.innerText = config.text;
+    agentBubble.style.animation = 'none';
+    void agentBubble.offsetWidth;
+    agentBubble.style.animation = 'popIn 0.3s ease';
+
+    // 4. 如果是"喂奶"或"保暖"，3 秒后自动变回正常
+    if (state === 'fed' || state === 'warm') {
+      clearTimeout(window.autoResetTimer);
+      window.autoResetTimer = setTimeout(() => {
+        setCatState('normal');
+      }, 3000);
+    }
+  }
+</script>
+
+</body>
+</html>
