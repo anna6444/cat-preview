@@ -141,7 +141,6 @@
 
 <!-- 智能体气泡 -->
 <div id="agentBubble" class="agent-bubble">喵～小橘在睡觉呢～</div>
-
 <script>
   const catImg = document.getElementById('catImg');
   const agentBubble = document.getElementById('agentBubble');
@@ -175,17 +174,28 @@
     }
   };
 
+  // ============ 预加载：页面打开时后台静默下载所有图片 ============
+  const preloadedImages = {};
+  function preloadAllImages() {
+    Object.keys(catStates).forEach(key => {
+      const img = new Image();
+      img.src = catStates[key].img;
+      preloadedImages[key] = img;
+    });
+  }
+  preloadAllImages();
+
   // 切换状态
   function setCatState(state) {
     const config = catStates[state];
     if (!config) return;
 
-    // 1. 换图片
+    // 1. 换图片（预加载过，会瞬间显示）
     catImg.src = config.img;
 
-    // 2. 换动画 
+    // 2. 换动画
     catImg.classList.remove('bounce', 'shake');
-    void catImg.offsetWidth; // 重置 CSS 动画
+    void catImg.offsetWidth;
     catImg.classList.add(config.anim);
 
     // 3. 更新智能体气泡文字
@@ -194,7 +204,7 @@
     void agentBubble.offsetWidth;
     agentBubble.style.animation = 'popIn 0.3s ease';
 
-    // 4. 如果是"喂奶"或"保暖"，3 秒后自动变回正常
+    // 4. 自动复位
     if (state === 'fed' || state === 'warm') {
       clearTimeout(window.autoResetTimer);
       window.autoResetTimer = setTimeout(() => {
@@ -203,6 +213,7 @@
     }
   }
 </script>
+
 
 </body>
 </html>
