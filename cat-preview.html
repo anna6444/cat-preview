@@ -52,7 +52,6 @@
   }
   .cat-media.hidden { display: none; }
 
-  /* ========== 智能体区域 ========== */
   .agent-area {
     position: fixed;
     top: 24px;
@@ -103,7 +102,6 @@
     to { opacity: 1; transform: scale(1); }
   }
 
-  /* 机器人 */
   .agent-robot {
     width: 64px;
     height: 72px;
@@ -122,7 +120,6 @@
   .robot-mouth { animation: talk 0.4s ease-in-out infinite; transform-origin: 32px 44px; }
   @keyframes talk { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.4); } }
 
-  /* 语音开关按钮 */
   .sound-toggle {
     position: fixed;
     top: 24px;
@@ -143,7 +140,6 @@
   }
   .sound-toggle:active { transform: scale(0.9); }
 
-  /* 按钮 */
   .controls {
     display: flex;
     flex-wrap: wrap;
@@ -169,10 +165,8 @@
 </head>
 <body>
 
-<!-- ========== 语音开关 ========== -->
 <button class="sound-toggle" id="soundToggle" onclick="toggleSound()">🔊</button>
 
-<!-- ========== 智能体 ========== -->
 <div class="agent-area">
   <div class="agent-bubble" id="agentBubble">喵～小橘在睡觉呢～</div>
   <div class="agent-robot">
@@ -197,21 +191,20 @@
   </div>
 </div>
 
-<!-- ========== 卡片 ========== -->
 <div class="card">
   <div class="cat-title">我的猫「小橘」</div>
 
   <div class="cat-scene" id="catScene">
-    <video id="vidNormal" class="cat-media" autoplay muted loop playsinline>
+    <video id="vidNormal" class="cat-media" autoplay muted loop playsinline webkit-playsinline>
       <source src="cat-normal.mp4" type="video/mp4">
     </video>
-    <video id="vidDrink" class="cat-media hidden" autoplay muted playsinline>
+    <video id="vidDrink" class="cat-media hidden" autoplay muted playsinline webkit-playsinline>
       <source src="cat-drink.mp4" type="video/mp4">
     </video>
-    <video id="vidPlay" class="cat-media hidden" autoplay muted playsinline>
+    <video id="vidPlay" class="cat-media hidden" autoplay muted playsinline webkit-playsinline>
       <source src="cat-play.mp4" type="video/mp4">
     </video>
-    <video id="vidBlanket" class="cat-media hidden" autoplay muted playsinline>
+    <video id="vidBlanket" class="cat-media hidden" autoplay muted playsinline webkit-playsinline>
       <source src="cat-blanket.mp4" type="video/mp4">
     </video>
   </div>
@@ -227,9 +220,10 @@
 <script>
   const agentBubble = document.getElementById('agentBubble');
   const soundToggle = document.getElementById('soundToggle');
-
-  // 语音开关状态（默认开）
   let soundEnabled = true;
+  let currentAudio = null;
+  let audioPlaying = false;       // 音频播放锁
+  let lastVoiceState = null;      // 上次播放音频的状态
 
   const mediaElements = {
     normal: document.getElementById('vidNormal'),
@@ -238,7 +232,6 @@
     blanket: document.getElementById('vidBlanket')
   };
 
-  // 状态文案（与气泡显示对应）
   const stateTexts = {
     normal: '喵～小橘在睡觉呢～',
     drink: '咕嘟咕嘟～好喝！',
@@ -246,47 +239,63 @@
     blanket: '暖暖的，好舒服～'
   };
 
-  // 音频文件映射（全部对应你上传的 mp3 文件）
   const voiceMap = {
     normal: 'voice-rest-alert.mp3',
     drink: 'voice-thanks-milk.mp3',
-    play: 'voice-bored-alert.mp3',    // 玩球时用“无聊求陪玩”的音频，很贴切
-    blanket: 'voice-thanks-blanket.mp3',
-    hungry: 'voice-hungry-alert.mp3', // 饿了提醒
-    cold: 'voice-cold-alert.mp3',     // 冷了提醒
-    taskDone: 'voice-task-done.mp3',   // 完成一个任务
-    halfDone: 'voice-half-done.mp3',   // 完成一半
-    allDone: 'voice-all-done.mp3'      // 全部完成
+    play: 'voice-bored-alert.mp3',
+    blanket: 'voice-thanks-blanket.mp3'
   };
 
-  // 当前正在播放的音频对象
-  let currentAudio = null;
-
-  // 播放指定状态对应的语音
+  // ================= 播放音频（加锁）=================
   function playVoiceForState(state) {
     if (!soundEnabled) return;
     const audioSrc = voiceMap[state];
     if (!audioSrc) return;
 
-    // 停掉上一个音频
+    // 【关键】音频正在播放中，不打断
+    if (audioPlaying) {
+      console.log('音频正在播放中，跳过本次播放');
+      return;
+    }
+
+    // 同一个状态不重复播放（防止视频 onended 后回到 normal 又播一次）
+    if (lastVoiceState === state && currentAudio && !currentAudio.paused) {
+      return;
+    }
+
     if (currentAudio) {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
+      try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(e){}
     }
 
     currentAudio = new Audio(audioSrc);
+    lastVoiceState = state;
+    audioPlaying = true;
+    currentAudio.onended = () => { audioPlaying = false; };
+    currentAudio.onerror = () => { audioPlaying = false; };
+
     currentAudio.play().catch(e => {
-      console.log('音频播放失败（可能是浏览器未授权或文件缺失）:', e);
+      audioPlaying = false;
+      console.log('音频播放失败:', audioSrc, e);
     });
   }
 
-  // 语音开关
+  // ================= 播放视频 =================
+  function playVideoSafely(videoEl) {
+    if (!videoEl) return;
+    try {
+      const p = videoEl.play();
+      if (p && p.catch) {
+        p.catch(e => console.log('视频自动播放被阻止', e));
+      }
+    } catch(e) { console.log('视频播放异常', e); }
+  }
+
   function toggleSound() {
     soundEnabled = !soundEnabled;
     soundToggle.innerText = soundEnabled ? '🔊' : '🔇';
     if (!soundEnabled && currentAudio) {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
+      try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(e){}
+      audioPlaying = false;
     }
   }
 
@@ -301,48 +310,67 @@
   }
 
   function setCatState(state) {
+    // 1. 隐藏所有
     Object.values(mediaElements).forEach(el => {
       if (el) el.classList.add('hidden');
     });
 
+    // 2. normal 时暂停其他视频
     if (state === 'normal') {
       pauseAllVideos();
     }
 
+    // 3. 显示目标
     const target = mediaElements[state];
     if (target) {
       target.classList.remove('hidden');
       if (target.tagName === 'VIDEO') {
         target.onended = null;
-        target.play().catch(e => console.log('视频播放失败:', e));
+        playVideoSafely(target);
+
+        // 【关键】视频播完后，只切换视频，不重新播放音频
         if (state === 'drink' || state === 'play' || state === 'blanket') {
           target.onended = function() {
-            setCatState('normal');
+            // 只切换显示，不调用 setCatState（避免播放音频）
+            Object.values(mediaElements).forEach(el => {
+              if (el) el.classList.add('hidden');
+            });
+            mediaElements.normal.classList.remove('hidden');
+            playVideoSafely(mediaElements.normal);
+
+            // 更新气泡为"正常"的文案（但不播放音频）
+            agentBubble.innerText = stateTexts.normal;
+            lastVoiceState = null; // 重置，下次点击 normal 才播放音频
           };
         }
       }
     }
 
-    // 更新气泡 + 播放对应音频
+    // 4. 更新气泡 + 播放音频
     if (stateTexts[state]) {
       const text = stateTexts[state];
       agentBubble.innerText = text;
       agentBubble.style.animation = 'none';
       void agentBubble.offsetWidth;
       agentBubble.style.animation = 'popIn 0.3s ease';
-      
-      // 播放语音
       playVoiceForState(state);
     }
   }
 
-  // 首次点击页面任意位置，激活 iOS 音频许可（手机上自动播放的权限）
-  document.body.addEventListener('click', function once() {
-    // 创建一个静音音频，触发浏览器的用户交互解锁
-    const silentAudio = new Audio();
-    silentAudio.play().catch(() => {});
-    document.body.removeEventListener('click', once);
+  // 首次点击解锁
+  document.addEventListener('touchstart', function unlock() {
+    playVideoSafely(mediaElements.normal);
+    document.removeEventListener('touchstart', unlock);
+  }, { once: true, passive: true });
+
+  document.addEventListener('click', function unlock() {
+    playVideoSafely(mediaElements.normal);
+    document.removeEventListener('click', unlock);
   }, { once: true });
+
+  window.addEventListener('load', () => {
+    setTimeout(() => playVideoSafely(mediaElements.normal), 300);
+  });
 </script>
 
 </body>
