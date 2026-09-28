@@ -41,7 +41,6 @@
     overflow: hidden;
     background: #f0f0f0; /* 视频自带背景，这里用灰色垫底 */
   }
-  /* 视频和图片的通用样式 */
   .cat-media {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -52,11 +51,11 @@
     z-index: 2;
   }
   .cat-media.hidden { display: none; }
-  
-  /* 智能体气泡 */
+
+  /* 气泡：移到右上方 */
   .agent-bubble {
     position: fixed;
-    bottom: 30px;
+    top: 30px;
     right: 30px;
     background: #fff;
     border: 2px solid #fde68a;
@@ -104,8 +103,6 @@
   }
   .btn:active { transform: scale(0.95); }
   .btn-normal { background: #e5e7eb; color: #333; }
-  .btn-hungry { background: #fee2e2; color: #b91c1c; }
-  .btn-cold { background: #dbeafe; color: #1d4ed8; }
   .btn-drink { background: #dcfce7; color: #15803d; }
   .btn-play { background: #fef3c7; color: #92400e; }
   .btn-blanket { background: #fffbeb; color: #92400e; }
@@ -117,32 +114,26 @@
   <div class="cat-title">我的猫「小橘」</div>
 
   <div class="cat-scene" id="catScene">
-    <!-- 正常休息（视频） -->
+    <!-- 正常休息（视频，循环） -->
     <video id="vidNormal" class="cat-media" autoplay muted loop playsinline>
       <source src="cat-normal.mp4" type="video/mp4">
     </video>
-    <!-- 喝奶（视频） -->
-    <video id="vidDrink" class="cat-media hidden" autoplay muted loop playsinline>
+    <!-- 喝奶（视频，不循环，播完结束） -->
+    <video id="vidDrink" class="cat-media hidden" autoplay muted playsinline>
       <source src="cat-drink.mp4" type="video/mp4">
     </video>
-    <!-- 玩球（视频） -->
-    <video id="vidPlay" class="cat-media hidden" autoplay muted loop playsinline>
+    <!-- 玩球（视频，不循环，播完结束） -->
+    <video id="vidPlay" class="cat-media hidden" autoplay muted playsinline>
       <source src="cat-play.mp4" type="video/mp4">
     </video>
-    <!-- 裹毯子（视频） -->
-    <video id="vidBlanket" class="cat-media hidden" autoplay muted loop playsinline>
+    <!-- 裹毯子（视频，不循环，播完结束） -->
+    <video id="vidBlanket" class="cat-media hidden" autoplay muted playsinline>
       <source src="cat-blanket.mp4" type="video/mp4">
     </video>
-    <!-- 饿了（图片，无视频） -->
-    <img id="imgHungry" class="cat-media hidden" src="cat-stage-1-hungry.png" alt="饿了">
-    <!-- 冷了（图片，无视频） -->
-    <img id="imgCold" class="cat-media hidden" src="cat-stage-1-cold.png" alt="冷了">
   </div>
 
   <div class="controls">
     <button class="btn btn-normal" onclick="setCatState('normal')">😴 正常</button>
-    <button class="btn btn-hungry" onclick="setCatState('hungry')">🍼 饿了</button>
-    <button class="btn btn-cold" onclick="setCatState('cold')">🧣 冷了</button>
     <button class="btn btn-drink" onclick="setCatState('drink')">🥛 喝奶</button>
     <button class="btn btn-play" onclick="setCatState('play')">🎾 玩球</button>
     <button class="btn btn-blanket" onclick="setCatState('blanket')">🛌 裹毯子</button>
@@ -154,45 +145,41 @@
 <script>
   const agentBubble = document.getElementById('agentBubble');
   
-  // 所有状态元素映射
+  // 只保留有视频的状态
   const mediaElements = {
     normal: document.getElementById('vidNormal'),
     drink: document.getElementById('vidDrink'),
     play: document.getElementById('vidPlay'),
-    blanket: document.getElementById('vidBlanket'),
-    hungry: document.getElementById('imgHungry'),
-    cold: document.getElementById('imgCold')
+    blanket: document.getElementById('vidBlanket')
   };
 
-  // 状态文案
   const stateTexts = {
     normal: '喵～小橘在睡觉呢～',
     drink: '咕嘟咕嘟～好喝！',
     play: '喵呜～球球真好玩！',
-    blanket: '暖暖的，好舒服～',
-    hungry: '喵～我饿了，想喝奶🍼',
-    cold: '喵～我冷了，要小毯子🧣'
+    blanket: '暖暖的，好舒服～'
   };
 
-  // 播放视频前，重置其他所有视频
+  // 暂停所有视频并重置
   function pauseAllVideos() {
     Object.values(mediaElements).forEach(el => {
-      if (el.tagName === 'VIDEO') {
+      if (el && el.tagName === 'VIDEO') {
         el.pause();
-        el.currentTime = 0; // 重置到开头
+        el.currentTime = 0;
+        el.onended = null;
       }
     });
   }
 
   // 切换状态
   function setCatState(state) {
-    // 1. 先把所有的隐藏
+    // 1. 隐藏所有
     Object.values(mediaElements).forEach(el => {
-      el.classList.add('hidden');
+      if (el) el.classList.add('hidden');
     });
-    
-    // 2. 如果切回 normal，或者切到没有视频的状态，暂停所有视频
-    if (state !== 'drink' && state !== 'play' && state !== 'blanket') {
+
+    // 2. 如果是切回 normal，暂停其他视频
+    if (state === 'normal') {
       pauseAllVideos();
     }
 
@@ -201,7 +188,14 @@
     if (target) {
       target.classList.remove('hidden');
       if (target.tagName === 'VIDEO') {
+        target.onended = null;
         target.play().catch(e => console.log('视频播放失败:', e));
+        // 临时状态：播完自动回正常
+        if (state === 'drink' || state === 'play' || state === 'blanket') {
+          target.onended = function() {
+            setCatState('normal');
+          };
+        }
       }
     }
 
@@ -211,14 +205,6 @@
       agentBubble.style.animation = 'none';
       void agentBubble.offsetWidth;
       agentBubble.style.animation = 'popIn 0.3s ease';
-    }
-
-    // 5. 喝奶、玩球、裹毯子，3 秒后自动回正常
-    if (state === 'drink' || state === 'play' || state === 'blanket') {
-      clearTimeout(window.autoResetTimer);
-      window.autoResetTimer = setTimeout(() => {
-        setCatState('normal');
-      }, 3000);
     }
   }
 </script>
