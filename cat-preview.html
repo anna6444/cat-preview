@@ -115,30 +115,12 @@
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-4px); }
   }
-  .robot-antenna-light {
-    animation: lightBlink 1.6s ease-in-out infinite;
-    transform-origin: center;
-  }
-  @keyframes lightBlink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-  .robot-eyes {
-    animation: blink 4s ease-in-out infinite;
-    transform-origin: 32px 35px;
-  }
-  @keyframes blink {
-    0%, 92%, 100% { transform: scaleY(1); }
-    95% { transform: scaleY(0.1); }
-  }
-  .robot-mouth {
-    animation: talk 0.4s ease-in-out infinite;
-    transform-origin: 32px 44px;
-  }
-  @keyframes talk {
-    0%, 100% { transform: scaleY(1); }
-    50% { transform: scaleY(0.4); }
-  }
+  .robot-antenna-light { animation: lightBlink 1.6s ease-in-out infinite; transform-origin: center; }
+  @keyframes lightBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .robot-eyes { animation: blink 4s ease-in-out infinite; transform-origin: 32px 35px; }
+  @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+  .robot-mouth { animation: talk 0.4s ease-in-out infinite; transform-origin: 32px 44px; }
+  @keyframes talk { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.4); } }
 
   /* 语音开关按钮 */
   .sound-toggle {
@@ -256,6 +238,7 @@
     blanket: document.getElementById('vidBlanket')
   };
 
+  // 状态文案（与气泡显示对应）
   const stateTexts = {
     normal: '喵～小橘在睡觉呢～',
     drink: '咕嘟咕嘟～好喝！',
@@ -263,53 +246,47 @@
     blanket: '暖暖的，好舒服～'
   };
 
-  // ========== 语音合成：模拟小孩奶音 ==========
-  let voiceReady = false;
-  let preferredVoice = null;
+  // 音频文件映射（全部对应你上传的 mp3 文件）
+  const voiceMap = {
+    normal: 'voice-rest-alert.mp3',
+    drink: 'voice-thanks-milk.mp3',
+    play: 'voice-bored-alert.mp3',    // 玩球时用“无聊求陪玩”的音频，很贴切
+    blanket: 'voice-thanks-blanket.mp3',
+    hungry: 'voice-hungry-alert.mp3', // 饿了提醒
+    cold: 'voice-cold-alert.mp3',     // 冷了提醒
+    taskDone: 'voice-task-done.mp3',   // 完成一个任务
+    halfDone: 'voice-half-done.mp3',   // 完成一半
+    allDone: 'voice-all-done.mp3'      // 全部完成
+  };
 
-  function loadVoices() {
-    if (!('speechSynthesis' in window)) return;
-    const voices = window.speechSynthesis.getVoices();
-    if (!voices || voices.length === 0) return;
+  // 当前正在播放的音频对象
+  let currentAudio = null;
 
-    // 优先选中文女声
-    preferredVoice = voices.find(v => 
-      v.lang === 'zh-CN' && (v.name.includes('婷') || v.name.includes('美') || v.name.includes('小') || v.name.includes('Chinese'))
-    ) || voices.find(v => v.lang === 'zh-CN' || v.lang === 'zh_CN') 
-      || voices[0];
-    voiceReady = true;
-  }
-
-  if ('speechSynthesis' in window) {
-    loadVoices();
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-  }
-
-  function speak(text) {
+  // 播放指定状态对应的语音
+  function playVoiceForState(state) {
     if (!soundEnabled) return;
-    if (!('speechSynthesis' in window)) return;
-    if (!voiceReady) loadVoices();
+    const audioSrc = voiceMap[state];
+    if (!audioSrc) return;
 
-    try {
-      window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = 'zh-CN';
-      if (preferredVoice) utter.voice = preferredVoice;
-      utter.pitch = 1.3;   // 调高音调，模拟小孩/卡通音
-      utter.rate = 0.5;    // 语速
-      utter.volume = 1.0;
-      window.speechSynthesis.speak(utter);
-    } catch (e) {
-      console.log('语音播放失败', e);
+    // 停掉上一个音频
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
     }
+
+    currentAudio = new Audio(audioSrc);
+    currentAudio.play().catch(e => {
+      console.log('音频播放失败（可能是浏览器未授权或文件缺失）:', e);
+    });
   }
 
   // 语音开关
   function toggleSound() {
     soundEnabled = !soundEnabled;
     soundToggle.innerText = soundEnabled ? '🔊' : '🔇';
-    if (!soundEnabled && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+    if (!soundEnabled && currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
     }
   }
 
@@ -346,24 +323,24 @@
       }
     }
 
-    // 更新气泡 + 语音
+    // 更新气泡 + 播放对应音频
     if (stateTexts[state]) {
       const text = stateTexts[state];
       agentBubble.innerText = text;
       agentBubble.style.animation = 'none';
       void agentBubble.offsetWidth;
       agentBubble.style.animation = 'popIn 0.3s ease';
-      speak(text);
+      
+      // 播放语音
+      playVoiceForState(state);
     }
   }
 
-  // 首次点击页面任意位置，激活 iOS 的语音许可
+  // 首次点击页面任意位置，激活 iOS 音频许可（手机上自动播放的权限）
   document.body.addEventListener('click', function once() {
-    if ('speechSynthesis' in window) {
-      const u = new SpeechSynthesisUtterance('');
-      u.volume = 0;
-      window.speechSynthesis.speak(u);
-    }
+    // 创建一个静音音频，触发浏览器的用户交互解锁
+    const silentAudio = new Audio();
+    silentAudio.play().catch(() => {});
     document.body.removeEventListener('click', once);
   }, { once: true });
 </script>
