@@ -35,24 +35,24 @@
   .cat-scene {
     position: relative;
     width: 100%;
-    height: 380px;
+    aspect-ratio: 1 / 1;   /* 高度自动 = 宽度，跟视频一样是正方形 */
     margin-bottom: 16px;
     border-radius: 20px;
     overflow: hidden;
-    background: #f0f0f0; /* 视频自带背景，这里用灰色垫底 */
+    background: #f0f0f0;
   }
   .cat-media {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     width: 100%;
     height: 100%;
-    object-fit: contain; /* 保持比例，不拉伸 */
+    object-fit: cover;   /* 完全填满容器，不留边 */
     transition: opacity 0.3s ease;
     z-index: 2;
   }
   .cat-media.hidden { display: none; }
 
-  /* 气泡：移到右上方 */
+  /* 气泡：右上方 */
   .agent-bubble {
     position: fixed;
     top: 30px;
@@ -84,7 +84,7 @@
     to { opacity: 1; transform: scale(1); }
   }
 
-  /* 控制按钮 */
+  /* 按钮 */
   .controls {
     display: flex;
     flex-wrap: wrap;
