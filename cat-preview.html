@@ -35,7 +35,7 @@
   .cat-scene {
     position: relative;
     width: 100%;
-    aspect-ratio: 1 / 1;   /* 高度自动 = 宽度，跟视频一样是正方形 */
+    aspect-ratio: 1 / 1;
     margin-bottom: 16px;
     border-radius: 20px;
     overflow: hidden;
@@ -46,42 +46,106 @@
     top: 0; left: 0; right: 0; bottom: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;   /* 完全填满容器，不留边 */
+    object-fit: cover;
     transition: opacity 0.3s ease;
     z-index: 2;
   }
   .cat-media.hidden { display: none; }
 
-  /* 气泡：右上方 */
-  .agent-bubble {
+  /* ========== 智能体区域（机器人 + 气泡） ========== */
+  .agent-area {
     position: fixed;
-    top: 30px;
-    right: 30px;
+    top: 24px;
+    right: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  /* 气泡 */
+  .agent-bubble {
+    position: relative;
     background: #fff;
     border: 2px solid #fde68a;
-    border-radius: 20px;
-    padding: 12px 16px;
+    border-radius: 18px;
+    padding: 10px 14px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-    max-width: 200px;
-    font-size: 14px;
+    max-width: 160px;
+    font-size: 13px;
     color: #92400e;
     font-weight: bold;
+    line-height: 1.4;
     animation: popIn 0.3s ease;
-    z-index: 100;
+    margin-top: 8px;
   }
   .agent-bubble::after {
     content: '';
     position: absolute;
-    bottom: -8px;
-    right: 20px;
+    right: -8px;
+    top: 20px;
     width: 0; height: 0;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-top: 8px solid #fff;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-left: 8px solid #fff;
+  }
+  .agent-bubble::before {
+    content: '';
+    position: absolute;
+    right: -11px;
+    top: 19px;
+    width: 0; height: 0;
+    border-top: 9px solid transparent;
+    border-bottom: 9px solid transparent;
+    border-left: 9px solid #fde68a;
   }
   @keyframes popIn {
-    from { opacity: 0; transform: scale(0.8); }
+    from { opacity: 0; transform: scale(0.85); }
     to { opacity: 1; transform: scale(1); }
+  }
+
+  /* 机器人 */
+  .agent-robot {
+    width: 64px;
+    height: 72px;
+    flex-shrink: 0;
+    animation: robotFloat 2.5s ease-in-out infinite;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+  }
+  @keyframes robotFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  /* 天线灯闪烁 */
+  .robot-antenna-light {
+    animation: lightBlink 1.6s ease-in-out infinite;
+    transform-origin: center;
+  }
+  @keyframes lightBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* 眼睛眨动 */
+  .robot-eyes {
+    animation: blink 4s ease-in-out infinite;
+    transform-origin: 32px 35px;
+  }
+  @keyframes blink {
+    0%, 92%, 100% { transform: scaleY(1); }
+    95% { transform: scaleY(0.1); }
+  }
+
+  /* 嘴巴说话动画 */
+  .robot-mouth {
+    animation: talk 0.4s ease-in-out infinite;
+    transform-origin: 32px 44px;
+  }
+  @keyframes talk {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.4); }
   }
 
   /* 按钮 */
@@ -110,23 +174,54 @@
 </head>
 <body>
 
+<!-- ========== 智能体 ========== -->
+<div class="agent-area">
+  <div class="agent-bubble" id="agentBubble">喵～小橘在睡觉呢～</div>
+  <div class="agent-robot">
+    <svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg">
+      <!-- 天线 -->
+      <line x1="32" y1="10" x2="32" y2="18" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+      <!-- 天线灯（闪烁） -->
+      <circle class="robot-antenna-light" cx="32" cy="8" r="4" fill="#fbbf24"/>
+      <!-- 耳朵 -->
+      <rect x="8" y="26" width="6" height="14" rx="3" fill="#cbd5e1"/>
+      <rect x="50" y="26" width="6" height="14" rx="3" fill="#cbd5e1"/>
+      <!-- 头 -->
+      <rect x="10" y="18" width="44" height="36" rx="14" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+      <!-- 眼睛（眨动） -->
+      <g class="robot-eyes">
+        <circle cx="24" cy="34" r="4.5" fill="#1e293b"/>
+        <circle cx="40" cy="34" r="4.5" fill="#1e293b"/>
+        <circle cx="25.5" cy="32.5" r="1.4" fill="#fff"/>
+        <circle cx="41.5" cy="32.5" r="1.4" fill="#fff"/>
+      </g>
+      <!-- 腮红 -->
+      <circle cx="18" cy="42" r="3" fill="#fbcfe8" opacity="0.7"/>
+      <circle cx="46" cy="42" r="3" fill="#fbcfe8" opacity="0.7"/>
+      <!-- 嘴巴（说话时动） -->
+      <ellipse class="robot-mouth" cx="32" cy="44" rx="5" ry="3" fill="#475569"/>
+      <!-- 身体 -->
+      <rect x="16" y="56" width="32" height="14" rx="6" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1.5"/>
+      <!-- 胸口指示灯 -->
+      <circle cx="32" cy="63" r="3" fill="#34d399"/>
+    </svg>
+  </div>
+</div>
+
+<!-- ========== 卡片 ========== -->
 <div class="card">
   <div class="cat-title">我的猫「小橘」</div>
 
   <div class="cat-scene" id="catScene">
-    <!-- 正常休息（视频，循环） -->
     <video id="vidNormal" class="cat-media" autoplay muted loop playsinline>
       <source src="cat-normal.mp4" type="video/mp4">
     </video>
-    <!-- 喝奶（视频，不循环，播完结束） -->
     <video id="vidDrink" class="cat-media hidden" autoplay muted playsinline>
       <source src="cat-drink.mp4" type="video/mp4">
     </video>
-    <!-- 玩球（视频，不循环，播完结束） -->
     <video id="vidPlay" class="cat-media hidden" autoplay muted playsinline>
       <source src="cat-play.mp4" type="video/mp4">
     </video>
-    <!-- 裹毯子（视频，不循环，播完结束） -->
     <video id="vidBlanket" class="cat-media hidden" autoplay muted playsinline>
       <source src="cat-blanket.mp4" type="video/mp4">
     </video>
@@ -140,12 +235,11 @@
   </div>
 </div>
 
-<div id="agentBubble" class="agent-bubble">喵～小橘在睡觉呢～</div>
-
 <script>
   const agentBubble = document.getElementById('agentBubble');
-  
-  // 只保留有视频的状态
+  const robot = document.querySelector('.agent-robot');
+  const robotMouth = document.querySelector('.robot-mouth');
+
   const mediaElements = {
     normal: document.getElementById('vidNormal'),
     drink: document.getElementById('vidDrink'),
@@ -160,7 +254,6 @@
     blanket: '暖暖的，好舒服～'
   };
 
-  // 暂停所有视频并重置
   function pauseAllVideos() {
     Object.values(mediaElements).forEach(el => {
       if (el && el.tagName === 'VIDEO') {
@@ -171,26 +264,21 @@
     });
   }
 
-  // 切换状态
   function setCatState(state) {
-    // 1. 隐藏所有
     Object.values(mediaElements).forEach(el => {
       if (el) el.classList.add('hidden');
     });
 
-    // 2. 如果是切回 normal，暂停其他视频
     if (state === 'normal') {
       pauseAllVideos();
     }
 
-    // 3. 显示对应的元素
     const target = mediaElements[state];
     if (target) {
       target.classList.remove('hidden');
       if (target.tagName === 'VIDEO') {
         target.onended = null;
         target.play().catch(e => console.log('视频播放失败:', e));
-        // 临时状态：播完自动回正常
         if (state === 'drink' || state === 'play' || state === 'blanket') {
           target.onended = function() {
             setCatState('normal');
@@ -199,7 +287,7 @@
       }
     }
 
-    // 4. 更新气泡
+    // 更新气泡 + 机器人动画
     if (stateTexts[state]) {
       agentBubble.innerText = stateTexts[state];
       agentBubble.style.animation = 'none';
