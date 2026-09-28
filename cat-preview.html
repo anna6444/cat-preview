@@ -25,99 +25,75 @@
     width: 100%;
     max-width: 400px;
     text-align: center;
-    position: relative;
   }
+  .cat-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #4b7f23;
+    margin: 10px 0;
+  }
+
+  /* ========== 场景容器 ========== */
   .cat-scene {
     position: relative;
     width: 100%;
-    height: 360px;
-    margin-bottom: 20px;
+    height: 380px;
+    margin-bottom: 16px;
     border-radius: 20px;
     overflow: hidden;
-    background: linear-gradient(180deg, #c9e4ff 0%, #e8f4ff 45%, #fef9ef 70%);
+    transition: background 0.6s ease;
   }
-  .cat-scene::before {
-    content: '';
-    position: absolute;
-    top: 20px;
-    right: 30px;
-    width: 70px;
-    height: 70px;
-    background: radial-gradient(circle, #fff5c2 0%, #ffe680 40%, rgba(255,230,128,0) 70%);
-    border-radius: 50%;
-    z-index: 0;
-  }
-  .cloud {
-    position: absolute;
-    background: #fff;
-    border-radius: 50px;
-    opacity: 0.85;
-    z-index: 0;
-  }
-  .cloud::before,
-  .cloud::after {
-    content: '';
-    position: absolute;
-    background: #fff;
-    border-radius: 50%;
-  }
-  .cloud1 {
-    width: 60px; height: 20px;
-    top: 30px; left: 15%;
-  }
-  .cloud1::before { width: 30px; height: 30px; top: -14px; left: 8px; }
-  .cloud1::after  { width: 22px; height: 22px; top: -8px; left: 30px; }
 
-  .cloud2 {
-    width: 45px; height: 15px;
-    top: 60px; right: 25%;
-    opacity: 0.7;
+  /* --- 阶段1：温馨室内 --- */
+  .cat-scene.scene-indoor {
+    background: linear-gradient(180deg, #fef5e7 0%, #f0e0c8 62%, #d4b896 62%, #b89968 100%);
   }
-  .cloud2::before { width: 22px; height: 22px; top: -10px; left: 6px; }
-  .cloud2::after  { width: 16px; height: 16px; top: -6px; left: 22px; }
+  /* --- 阶段2-3：阳光草地 --- */
+  .cat-scene.scene-grass {
+    background: linear-gradient(180deg, #c9e4ff 0%, #e8f4ff 55%, #a8d878 55%, #86c458 100%);
+  }
+  /* --- 阶段4-5：樱花树下 --- */
+  .cat-scene.scene-sakura {
+    background: linear-gradient(180deg, #ffd9e8 0%, #ffe8f0 55%, #c8e8a8 55%, #a8d088 100%);
+  }
+  /* --- 阶段6-7：彩虹天空 --- */
+  .cat-scene.scene-rainbow {
+    background: linear-gradient(180deg, #a8d8ff 0%, #e8d8ff 35%, #ffd8e8 55%, #b8e8a0 55%, #90d070 100%);
+  }
 
-  .grass-back {
+  /* ========== 时间光照叠加层 ========== */
+  .time-overlay {
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 45%;
-    background: linear-gradient(180deg, #a8d878 0%, #86c458 100%);
-    z-index: 0;
-  }
-  .grass-back::before {
-    content: '';
-    position: absolute;
-    top: -20px;
-    left: -20px;
-    right: -20px;
-    height: 40px;
-    background: radial-gradient(ellipse at center top, #b8e088 0%, #a8d878 70%);
-    border-radius: 50% 50% 0 0;
-  }
-  .grass-blades {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 45%;
-    z-index: 0;
-    overflow: hidden;
+    top: 0; left: 0; right: 0; bottom: 0;
     pointer-events: none;
+    z-index: 3;
+    transition: background 0.6s ease;
   }
-  .blade {
+  .time-overlay.time-morning {
+    background: linear-gradient(180deg, rgba(255, 210, 130, 0.15), rgba(255, 210, 130, 0) 50%);
+  }
+  .time-overlay.time-noon {
+    background: transparent;
+  }
+  .time-overlay.time-dusk {
+    background: linear-gradient(180deg, rgba(255, 130, 60, 0.32), rgba(255, 130, 60, 0.08) 60%);
+  }
+  .time-overlay.time-night {
+    background: linear-gradient(180deg, rgba(15, 25, 70, 0.6), rgba(15, 25, 70, 0.35) 60%);
+  }
+
+  /* ========== 场景装饰（emoji 定位） ========== */
+  .scene-deco {
     position: absolute;
-    bottom: 0;
-    width: 3px;
-    height: 14px;
-    background: linear-gradient(180deg, #6cb840 0%, #4a9628 100%);
-    border-radius: 50% 50% 0 0;
-    transform-origin: bottom center;
-    animation: swayBlade 3s ease-in-out infinite;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 0;
+    pointer-events: none;
+    font-size: 32px;
+    line-height: 1;
   }
-  @keyframes swayBlade {
-    0%, 100% { transform: rotate(-3deg); }
-    50% { transform: rotate(3deg); }
+  .scene-deco span {
+    position: absolute;
+    opacity: 0.9;
   }
 
   /* ========== 猫 ========== */
@@ -130,8 +106,6 @@
     z-index: 2;
     padding-bottom: 32px;
   }
-  /* ========== 阴影：双层更真实 ========== */
-  /* 外层大阴影（柔和扩散） */
   .cat-wrap::before {
     content: '';
     position: absolute;
@@ -150,7 +124,6 @@
     animation: shadowBreath 3s ease-in-out infinite;
     z-index: 1;
   }
-  /* 内层深色核心（贴着猫身） */
   .cat-wrap::after {
     content: '';
     position: absolute;
@@ -186,23 +159,15 @@
     will-change: transform;
   }
   @keyframes float3D {
-    0%, 100% {
-      transform: translateY(0) scale(1);
-    }
-    50% {
-      transform: translateY(-6px) scale(1.02);
-    }
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-6px) scale(1.02); }
   }
   .cat-img:active {
     transform: scale(0.96) translateY(2px);
     transition: transform 0.1s;
   }
-  .cat-img.bounce {
-    animation: bounce 0.6s ease;
-  }
-  .cat-img.shake {
-    animation: shake 0.5s ease;
-  }
+  .cat-img.bounce { animation: bounce 0.6s ease; }
+  .cat-img.shake { animation: shake 0.5s ease; }
   @keyframes bounce {
     0%, 100% { transform: scale(1) translateY(0); }
     50% { transform: scale(1.12) translateY(-15px); }
@@ -213,12 +178,7 @@
     75% { transform: translateX(6px); }
   }
 
-  .cat-title {
-    font-size: 20px;
-    font-weight: bold;
-    color: #4b7f23;
-    margin: 10px 0;
-  }
+  /* ========== 智能体 ========== */
   .agent-bubble {
     position: fixed;
     bottom: 30px;
@@ -240,8 +200,7 @@
     position: absolute;
     bottom: -8px;
     right: 20px;
-    width: 0;
-    height: 0;
+    width: 0; height: 0;
     border-left: 8px solid transparent;
     border-right: 8px solid transparent;
     border-top: 8px solid #fff;
@@ -250,18 +209,28 @@
     from { opacity: 0; transform: scale(0.8); }
     to { opacity: 1; transform: scale(1); }
   }
+
+  /* ========== 按钮 ========== */
   .controls {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
     justify-content: center;
-    margin-top: 20px;
+    margin-top: 12px;
+  }
+  .section-label {
+    width: 100%;
+    font-size: 12px;
+    color: #888;
+    text-align: left;
+    margin: 8px 0 2px;
+    padding-left: 4px;
   }
   .btn {
-    padding: 10px 16px;
+    padding: 8px 12px;
     border: none;
-    border-radius: 12px;
-    font-size: 14px;
+    border-radius: 10px;
+    font-size: 13px;
     font-weight: bold;
     cursor: pointer;
     transition: transform 0.1s;
@@ -272,100 +241,171 @@
   .btn-cold { background: #dbeafe; color: #1d4ed8; }
   .btn-fed { background: #dcfce7; color: #15803d; }
   .btn-warm { background: #fffbeb; color: #92400e; }
+  .btn-stage { background: #f0e8ff; color: #5a3a90; }
+  .btn-time { background: #fff0d8; color: #8a5a10; }
+  .btn-active { outline: 2px solid #ef4444; }
 </style>
 </head>
 <body>
 
 <div class="card">
-  <div class="cat-title">我的猫「小橘」· 阶段 1</div>
+  <div class="cat-title" id="catTitle">我的猫「小橘」· 阶段 1</div>
 
-  <div class="cat-scene">
-    <div class="cloud cloud1"></div>
-    <div class="cloud cloud2"></div>
-
-    <div class="grass-back"></div>
-    <div class="grass-blades" id="grassBlades"></div>
-
+  <div class="cat-scene scene-indoor" id="catScene">
+    <div class="scene-deco" id="sceneDeco"></div>
+    <div class="time-overlay time-noon" id="timeOverlay"></div>
     <div class="cat-wrap">
       <img id="catImg" class="cat-img" src="cat-stage-1-normal.png" alt="猫咪">
     </div>
   </div>
 
   <div class="controls">
-    <button class="btn btn-normal" onclick="setCatState('normal')">😴 正常休息</button>
-    <button class="btn btn-hungry" onclick="setCatState('hungry')">🍼 饿了找奶</button>
-    <button class="btn btn-cold" onclick="setCatState('cold')">🧣 冷了要毯子</button>
-    <button class="btn btn-fed" onclick="setCatState('fed')">🍖 喂奶成功</button>
-    <button class="btn btn-warm" onclick="setCatState('warm')">☀️ 盖毯子保暖</button>
+    <div class="section-label">🐱 猫的状态</div>
+    <button class="btn btn-normal" onclick="setCatState('normal')">😴 正常</button>
+    <button class="btn btn-hungry" onclick="setCatState('hungry')">🍼 饿了</button>
+    <button class="btn btn-cold" onclick="setCatState('cold')">🧣 冷了</button>
+    <button class="btn btn-fed" onclick="setCatState('fed')">🍖 喂奶</button>
+    <button class="btn btn-warm" onclick="setCatState('warm')">☀️ 保暖</button>
+
+    <div class="section-label">🌱 阶段场景（模拟）</div>
+    <button class="btn btn-stage" onclick="setStage(1)">1 室内</button>
+    <button class="btn btn-stage" onclick="setStage(2)">2-3 草地</button>
+    <button class="btn btn-stage" onclick="setStage(4)">4-5 樱花</button>
+    <button class="btn btn-stage" onclick="setStage(6)">6-7 彩虹</button>
+
+    <div class="section-label">🕐 时间光照（模拟，默认按真实时间）</div>
+    <button class="btn btn-time" onclick="setTime('morning')">🌅 早上</button>
+    <button class="btn btn-time" onclick="setTime('noon')">☀️ 中午</button>
+    <button class="btn btn-time" onclick="setTime('dusk')">🌇 傍晚</button>
+    <button class="btn btn-time" onclick="setTime('night')">🌙 晚上</button>
   </div>
 </div>
 
-<div id="agentBubble" class="agent-bubble">喵～小橘在草地上睡觉呢～</div>
+<div id="agentBubble" class="agent-bubble">喵～小橘在睡觉呢～</div>
 
 <script>
   const catImg = document.getElementById('catImg');
+  const catScene = document.getElementById('catScene');
+  const timeOverlay = document.getElementById('timeOverlay');
+  const sceneDeco = document.getElementById('sceneDeco');
   const agentBubble = document.getElementById('agentBubble');
+  const catTitle = document.getElementById('catTitle');
 
+  /* ========== 猫状态映射 ========== */
   const catStates = {
-    normal: {
-      img: 'cat-stage-1-normal.png',
-      text: '喵～小橘在草地上睡觉呢～',
-      anim: 'breathe'
-    },
-    hungry: {
-      img: 'cat-stage-1-hungry.png',
-      text: '喵～我饿了，想喝奶🍼',
-      anim: 'shake'
-    },
-    cold: {
-      img: 'cat-stage-1-cold.png',
-      text: '喵～我冷了，要小毯子🧣',
-      anim: 'shake'
-    },
-    fed: {
-      img: 'cat-stage-1-fed.png',
-      text: '咕嘟咕嘟～好喝！',
-      anim: 'bounce'
-    },
-    warm: {
-      img: 'cat-stage-1-warm.png',
-      text: '暖暖的，好舒服～',
-      anim: 'bounce'
-    }
+    normal: { img: 'cat-stage-1-normal.png', text: '喵～小橘在睡觉呢～', anim: 'breathe' },
+    hungry: { img: 'cat-stage-1-hungry.png', text: '喵～我饿了，想喝奶🍼', anim: 'shake' },
+    cold:   { img: 'cat-stage-1-cold.png',   text: '喵～我冷了，要小毯子🧣', anim: 'shake' },
+    fed:    { img: 'cat-stage-1-fed.png',    text: '咕嘟咕嘟～好喝！', anim: 'bounce' },
+    warm:   { img: 'cat-stage-1-warm.png',   text: '暖暖的，好舒服～', anim: 'bounce' }
   };
 
-  const preloadedImages = {};
+  /* ========== 阶段 → 场景 映射 ========== */
+  const STAGE_SCENES = {
+    1: 'indoor',
+    2: 'grass', 3: 'grass',
+    4: 'sakura', 5: 'sakura',
+    6: 'rainbow', 7: 'rainbow'
+  };
+
+  /* ========== 场景装饰配置 ========== */
+  const SCENE_DECOS = {
+    indoor: [
+      { emoji: '🪟', top: '15%', left: '75%', size: '42px' },
+      { emoji: '🪴', bottom: '8%', left: '8%',  size: '36px' },
+      { emoji: '🖼️', top: '12%', left: '12%', size: '28px' }
+    ],
+    grass: [
+      { emoji: '☀️', top: '8%',  right: '12%', size: '40px' },
+      { emoji: '☁️', top: '18%', left: '10%',  size: '32px' },
+      { emoji: '☁️', top: '28%', right: '25%', size: '24px' },
+      { emoji: '🌻', bottom: '6%', left: '10%', size: '28px' },
+      { emoji: '🌼', bottom: '10%', right: '12%', size: '24px' }
+    ],
+    sakura: [
+      { emoji: '🌸', top: '15%', left: '10%',  size: '36px' },
+      { emoji: '🌸', top: '25%', right: '15%', size: '28px' },
+      { emoji: '🌸', top: '40%', left: '5%',   size: '22px' },
+      { emoji: '🌸', top: '10%', right: '5%',  size: '32px' },
+      { emoji: '🌸', bottom: '8%', right: '8%', size: '26px' }
+    ],
+    rainbow: [
+      { emoji: '🌈', top: '8%',  left: '10%',  size: '48px' },
+      { emoji: '☁️', top: '20%', left: '5%',   size: '30px' },
+      { emoji: '☁️', top: '15%', right: '8%',  size: '34px' },
+      { emoji: '⭐', top: '35%', right: '20%', size: '20px' },
+      { emoji: '🦋', bottom: '15%', left: '8%', size: '24px' }
+    ]
+  };
+
+  /* ========== 图片预加载 ========== */
   function preloadAllImages() {
     Object.keys(catStates).forEach(key => {
       const img = new Image();
       img.src = catStates[key].img;
-      preloadedImages[key] = img;
     });
   }
   preloadAllImages();
 
-  function generateGrass() {
-    const container = document.getElementById('grassBlades');
-    if (!container) return;
-    container.innerHTML = '';
-    for (let i = 0; i < 40; i++) {
-      const blade = document.createElement('div');
-      blade.className = 'blade';
-      blade.style.left = (Math.random() * 100) + '%';
-      blade.style.height = (8 + Math.random() * 10) + 'px';
-      blade.style.animationDelay = (Math.random() * 3) + 's';
-      blade.style.opacity = 0.5 + Math.random() * 0.5;
-      container.appendChild(blade);
-    }
+  /* ========== 获取当前时间段 ========== */
+  function getTimeOfDay() {
+    const h = new Date().getHours();
+    if (h >= 6 && h < 11) return 'morning';
+    if (h >= 11 && h < 17) return 'noon';
+    if (h >= 17 && h < 20) return 'dusk';
+    return 'night';
   }
-  generateGrass();
 
+  /* ========== 渲染场景装饰 ========== */
+  function renderSceneDeco(sceneName) {
+    const list = SCENE_DECOS[sceneName] || [];
+    sceneDeco.innerHTML = '';
+    list.forEach(item => {
+      const span = document.createElement('span');
+      span.textContent = item.emoji;
+      if (item.top)    span.style.top = item.top;
+      if (item.bottom) span.style.bottom = item.bottom;
+      if (item.left)   span.style.left = item.left;
+      if (item.right)  span.style.right = item.right;
+      if (item.size)   span.style.fontSize = item.size;
+      sceneDeco.appendChild(span);
+    });
+  }
+
+  /* ========== 应用场景（阶段 + 时间） ========== */
+  function applyScene(stage, timeOverride) {
+    const sceneName = STAGE_SCENES[stage] || 'indoor';
+    const time = timeOverride || getTimeOfDay();
+
+    catScene.className = 'cat-scene scene-' + sceneName;
+    timeOverlay.className = 'time-overlay time-' + time;
+    renderSceneDeco(sceneName);
+
+    // 更新标题
+    const sceneNames = { indoor: '🏠 温馨室内', grass: '☀️ 阳光草地', sakura: '🌸 樱花树下', rainbow: '🌈 彩虹天空' };
+    catTitle.textContent = `我的猫「小橘」· 阶段 ${stage} ${sceneNames[sceneName]}`;
+  }
+
+  /* ========== 切换阶段（模拟） ========== */
+  let currentStage = 1;
+  let currentTimeOverride = null;
+  function setStage(stage) {
+    currentStage = stage;
+    applyScene(currentStage, currentTimeOverride);
+  }
+
+  /* ========== 切换时间（模拟） ========== */
+  function setTime(time) {
+    currentTimeOverride = time;
+    applyScene(currentStage, currentTimeOverride);
+  }
+
+  /* ========== 切换猫的状态 ========== */
   function setCatState(state) {
     const config = catStates[state];
     if (!config) return;
 
     catImg.src = config.img;
-
     catImg.classList.remove('bounce', 'shake');
     void catImg.offsetWidth;
     catImg.classList.add(config.anim);
@@ -377,11 +417,12 @@
 
     if (state === 'fed' || state === 'warm') {
       clearTimeout(window.autoResetTimer);
-      window.autoResetTimer = setTimeout(() => {
-        setCatState('normal');
-      }, 3000);
+      window.autoResetTimer = setTimeout(() => setCatState('normal'), 3000);
     }
   }
+
+  /* ========== 初始化 ========== */
+  applyScene(currentStage, null);
 </script>
 
 </body>
