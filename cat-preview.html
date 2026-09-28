@@ -52,7 +52,7 @@
   }
   .cat-media.hidden { display: none; }
 
-  /* ========== 智能体区域（机器人 + 气泡） ========== */
+  /* ========== 智能体区域 ========== */
   .agent-area {
     position: fixed;
     top: 24px;
@@ -63,8 +63,6 @@
     z-index: 100;
     pointer-events: none;
   }
-
-  /* 气泡 */
   .agent-bubble {
     position: relative;
     background: #fff;
@@ -72,7 +70,7 @@
     border-radius: 18px;
     padding: 10px 14px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-    max-width: 160px;
+    max-width: 150px;
     font-size: 13px;
     color: #92400e;
     font-weight: bold;
@@ -117,8 +115,6 @@
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-4px); }
   }
-
-  /* 天线灯闪烁 */
   .robot-antenna-light {
     animation: lightBlink 1.6s ease-in-out infinite;
     transform-origin: center;
@@ -127,8 +123,6 @@
     0%, 100% { opacity: 1; }
     50% { opacity: 0.4; }
   }
-
-  /* 眼睛眨动 */
   .robot-eyes {
     animation: blink 4s ease-in-out infinite;
     transform-origin: 32px 35px;
@@ -137,8 +131,6 @@
     0%, 92%, 100% { transform: scaleY(1); }
     95% { transform: scaleY(0.1); }
   }
-
-  /* 嘴巴说话动画 */
   .robot-mouth {
     animation: talk 0.4s ease-in-out infinite;
     transform-origin: 32px 44px;
@@ -147,6 +139,27 @@
     0%, 100% { transform: scaleY(1); }
     50% { transform: scaleY(0.4); }
   }
+
+  /* 语音开关按钮 */
+  .sound-toggle {
+    position: fixed;
+    top: 24px;
+    left: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #fde68a;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 101;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s;
+  }
+  .sound-toggle:active { transform: scale(0.9); }
 
   /* 按钮 */
   .controls {
@@ -174,35 +187,29 @@
 </head>
 <body>
 
+<!-- ========== 语音开关 ========== -->
+<button class="sound-toggle" id="soundToggle" onclick="toggleSound()">🔊</button>
+
 <!-- ========== 智能体 ========== -->
 <div class="agent-area">
   <div class="agent-bubble" id="agentBubble">喵～小橘在睡觉呢～</div>
   <div class="agent-robot">
     <svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg">
-      <!-- 天线 -->
       <line x1="32" y1="10" x2="32" y2="18" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
-      <!-- 天线灯（闪烁） -->
       <circle class="robot-antenna-light" cx="32" cy="8" r="4" fill="#fbbf24"/>
-      <!-- 耳朵 -->
       <rect x="8" y="26" width="6" height="14" rx="3" fill="#cbd5e1"/>
       <rect x="50" y="26" width="6" height="14" rx="3" fill="#cbd5e1"/>
-      <!-- 头 -->
       <rect x="10" y="18" width="44" height="36" rx="14" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-      <!-- 眼睛（眨动） -->
       <g class="robot-eyes">
         <circle cx="24" cy="34" r="4.5" fill="#1e293b"/>
         <circle cx="40" cy="34" r="4.5" fill="#1e293b"/>
         <circle cx="25.5" cy="32.5" r="1.4" fill="#fff"/>
         <circle cx="41.5" cy="32.5" r="1.4" fill="#fff"/>
       </g>
-      <!-- 腮红 -->
       <circle cx="18" cy="42" r="3" fill="#fbcfe8" opacity="0.7"/>
       <circle cx="46" cy="42" r="3" fill="#fbcfe8" opacity="0.7"/>
-      <!-- 嘴巴（说话时动） -->
       <ellipse class="robot-mouth" cx="32" cy="44" rx="5" ry="3" fill="#475569"/>
-      <!-- 身体 -->
       <rect x="16" y="56" width="32" height="14" rx="6" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1.5"/>
-      <!-- 胸口指示灯 -->
       <circle cx="32" cy="63" r="3" fill="#34d399"/>
     </svg>
   </div>
@@ -237,8 +244,10 @@
 
 <script>
   const agentBubble = document.getElementById('agentBubble');
-  const robot = document.querySelector('.agent-robot');
-  const robotMouth = document.querySelector('.robot-mouth');
+  const soundToggle = document.getElementById('soundToggle');
+
+  // 语音开关状态（默认开）
+  let soundEnabled = true;
 
   const mediaElements = {
     normal: document.getElementById('vidNormal'),
@@ -253,6 +262,56 @@
     play: '喵呜～球球真好玩！',
     blanket: '暖暖的，好舒服～'
   };
+
+  // ========== 语音合成：模拟小孩奶音 ==========
+  let voiceReady = false;
+  let preferredVoice = null;
+
+  function loadVoices() {
+    if (!('speechSynthesis' in window)) return;
+    const voices = window.speechSynthesis.getVoices();
+    if (!voices || voices.length === 0) return;
+
+    // 优先选中文女声
+    preferredVoice = voices.find(v => 
+      v.lang === 'zh-CN' && (v.name.includes('婷') || v.name.includes('美') || v.name.includes('小') || v.name.includes('Chinese'))
+    ) || voices.find(v => v.lang === 'zh-CN' || v.lang === 'zh_CN') 
+      || voices[0];
+    voiceReady = true;
+  }
+
+  if ('speechSynthesis' in window) {
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  }
+
+  function speak(text) {
+    if (!soundEnabled) return;
+    if (!('speechSynthesis' in window)) return;
+    if (!voiceReady) loadVoices();
+
+    try {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'zh-CN';
+      if (preferredVoice) utter.voice = preferredVoice;
+      utter.pitch = 1.8;   // 调高音调，模拟小孩/卡通音
+      utter.rate = 1.0;    // 语速
+      utter.volume = 1.0;
+      window.speechSynthesis.speak(utter);
+    } catch (e) {
+      console.log('语音播放失败', e);
+    }
+  }
+
+  // 语音开关
+  function toggleSound() {
+    soundEnabled = !soundEnabled;
+    soundToggle.innerText = soundEnabled ? '🔊' : '🔇';
+    if (!soundEnabled && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  }
 
   function pauseAllVideos() {
     Object.values(mediaElements).forEach(el => {
@@ -287,14 +346,26 @@
       }
     }
 
-    // 更新气泡 + 机器人动画
+    // 更新气泡 + 语音
     if (stateTexts[state]) {
-      agentBubble.innerText = stateTexts[state];
+      const text = stateTexts[state];
+      agentBubble.innerText = text;
       agentBubble.style.animation = 'none';
       void agentBubble.offsetWidth;
       agentBubble.style.animation = 'popIn 0.3s ease';
+      speak(text);
     }
   }
+
+  // 首次点击页面任意位置，激活 iOS 的语音许可
+  document.body.addEventListener('click', function once() {
+    if ('speechSynthesis' in window) {
+      const u = new SpeechSynthesisUtterance('');
+      u.volume = 0;
+      window.speechSynthesis.speak(u);
+    }
+    document.body.removeEventListener('click', once);
+  }, { once: true });
 </script>
 
 </body>
