@@ -45,7 +45,6 @@
     justify-content: space-between;
     align-items: center;
   }
-  .progress-bar .heart { font-size: 16px; }
   .cat-scene {
     position: relative;
     width: 100%;
@@ -66,7 +65,6 @@
   }
   .cat-media.hidden { display: none; }
 
-  /* 智能体 */
   .agent-area {
     position: fixed;
     top: 24px;
@@ -117,7 +115,7 @@
     to { opacity: 1; transform: scale(1); }
   }
 
-  /* ========== 小精灵 ========== */
+  /* ========== 小仙女（PNG 版） ========== */
   .agent-robot {
     width: 72px;
     height: 82px;
@@ -125,45 +123,15 @@
     animation: elfFloat 2.5s ease-in-out infinite;
     filter: drop-shadow(0 4px 10px rgba(168, 85, 247, 0.3));
   }
+  .agent-robot img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
   @keyframes elfFloat {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-5px); }
-  }
-  .elf-eyes {
-    animation: elfBlink 4s ease-in-out infinite;
-    transform-box: fill-box;
-    transform-origin: center;
-  }
-  @keyframes elfBlink {
-    0%, 92%, 100% { transform: scaleY(1); }
-    95% { transform: scaleY(0.1); }
-  }
-  .elf-mouth {
-    animation: elfTalk 0.6s ease-in-out infinite;
-    transform-box: fill-box;
-    transform-origin: center;
-  }
-  @keyframes elfTalk {
-    0%, 100% { transform: scaleY(1); }
-    50% { transform: scaleY(0.5); }
-  }
-  .elf-star {
-    animation: elfSparkle 1.4s ease-in-out infinite;
-    transform-box: fill-box;
-    transform-origin: center;
-  }
-  @keyframes elfSparkle {
-    0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
-    50% { opacity: 0.55; transform: scale(1.35) rotate(20deg); }
-  }
-  .elf-hat-star {
-    animation: elfHatSparkle 2s ease-in-out infinite;
-    transform-box: fill-box;
-    transform-origin: center;
-  }
-  @keyframes elfHatSparkle {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
   }
 
   .sound-toggle {
@@ -226,65 +194,7 @@
 <div class="agent-area">
   <div class="agent-bubble" id="agentBubble">喵～小橘在睡觉呢～</div>
   <div class="agent-robot">
-    <svg viewBox="0 0 72 82" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="skirtGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#fbcfe8"/>
-          <stop offset="100%" stop-color="#ec4899"/>
-        </linearGradient>
-        <radialGradient id="wingGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#fff" stop-opacity="0.9"/>
-          <stop offset="100%" stop-color="#fce7f3" stop-opacity="0.5"/>
-        </radialGradient>
-      </defs>
-
-      <!-- 小翅膀 -->
-      <ellipse cx="20" cy="54" rx="9" ry="15" fill="url(#wingGrad)" transform="rotate(-25 20 54)"/>
-      <ellipse cx="52" cy="54" rx="9" ry="15" fill="url(#wingGrad)" transform="rotate(25 52 54)"/>
-
-      <!-- 裙子 -->
-      <path d="M36 50 L16 74 Q36 80 56 74 Z" fill="url(#skirtGrad)"/>
-      <path d="M20 70 Q36 76 52 70" stroke="#fff" stroke-width="1.2" fill="none" opacity="0.8"/>
-
-      <!-- 手臂 -->
-      <line x1="28" y1="55" x2="20" y2="62" stroke="#ffe4e1" stroke-width="3" stroke-linecap="round"/>
-      <line x1="44" y1="55" x2="58" y2="48" stroke="#ffe4e1" stroke-width="3" stroke-linecap="round"/>
-
-      <!-- 脸 -->
-      <circle cx="36" cy="38" r="14" fill="#ffe4e1"/>
-
-      <!-- 刘海 -->
-      <path d="M22 36 Q24 22 36 22 Q48 22 50 36 Q46 30 36 30 Q26 30 22 36" fill="#7c2d12"/>
-
-      <!-- 魔法帽 -->
-      <path d="M36 4 L20 26 Q36 30 52 26 Z" fill="#a78bfa"/>
-      <ellipse cx="36" cy="26" rx="18" ry="3.5" fill="#8b5cf6"/>
-      <circle class="elf-hat-star" cx="36" cy="12" r="2.5" fill="#fbbf24"/>
-      <circle cx="30" cy="18" r="1.5" fill="#fff" opacity="0.8"/>
-      <circle cx="42" cy="20" r="1.5" fill="#fff" opacity="0.8"/>
-
-      <!-- 眼睛 -->
-      <g class="elf-eyes">
-        <circle cx="31" cy="38" r="2.8" fill="#1e293b"/>
-        <circle cx="41" cy="38" r="2.8" fill="#1e293b"/>
-        <circle cx="31.9" cy="37.2" r="0.9" fill="#fff"/>
-        <circle cx="41.9" cy="37.2" r="0.9" fill="#fff"/>
-      </g>
-
-      <!-- 腮红 -->
-      <circle cx="26" cy="43" r="2.5" fill="#fbcfe8" opacity="0.85"/>
-      <circle cx="46" cy="43" r="2.5" fill="#fbcfe8" opacity="0.85"/>
-
-      <!-- 嘴巴 -->
-      <path class="elf-mouth" d="M33 45 Q36 47.5 39 45" stroke="#9f1239" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-
-      <!-- 仙女棒 -->
-      <line x1="58" y1="48" x2="64" y2="34" stroke="#c084fc" stroke-width="1.8" stroke-linecap="round"/>
-      <g class="elf-star">
-        <polygon points="66,27 67.3,30.2 70.5,30.5 68,32.8 68.7,36 66,34.2 63.3,36 64,32.8 61.5,30.5 64.7,30.2"
-                 fill="#fbbf24" stroke="#f59e0b" stroke-width="0.5" stroke-linejoin="round"/>
-      </g>
-    </svg>
+    <img src="fairy.png" alt="小仙女">
   </div>
 </div>
 
@@ -308,8 +218,12 @@
     <video id="vidBlanket" class="cat-media hidden" autoplay muted playsinline webkit-playsinline>
       <source src="cat-blanket.mp4" type="video/mp4">
     </video>
-    <img id="imgHungry" class="cat-media hidden" src="cat-stage-1-hungry.png" alt="饿了">
-    <img id="imgCold" class="cat-media hidden" src="cat-stage-1-cold.png" alt="冷了">
+    <video id="vidNeedPlay" class="cat-media hidden" autoplay muted loop playsinline webkit-playsinline>
+      <source src="cat-need.mp4" type="video/mp4">
+    </video>
+    <video id="vidNeedWarm" class="cat-media hidden" autoplay muted loop playsinline webkit-playsinline>
+      <source src="cat-cold.mp4" type="video/mp4">
+    </video>
   </div>
 
   <div class="controls">
@@ -322,7 +236,6 @@
 </div>
 
 <script>
-  // ========== 状态 ==========
   let soundEnabled = true;
   let currentAudio = null;
   let audioPlaying = false;
@@ -377,7 +290,6 @@
     return null;
   }
 
-  // ========== 元素 ==========
   const agentBubble = document.getElementById('agentBubble');
   const soundToggle = document.getElementById('soundToggle');
   const progressText = document.getElementById('progressText');
@@ -386,11 +298,10 @@
     drink: document.getElementById('vidDrink'),
     play: document.getElementById('vidPlay'),
     blanket: document.getElementById('vidBlanket'),
-    hungry: document.getElementById('imgHungry'),
-    cold: document.getElementById('imgCold')
+    needPlay: document.getElementById('vidNeedPlay'),
+    needWarm: document.getElementById('vidNeedWarm')
   };
 
-  // ========== 音频 ==========
   function playVoice(src) {
     if (!soundEnabled) return;
     if (audioPlaying) return;
@@ -407,7 +318,6 @@
     });
   }
 
-  // ========== 显示控制 ==========
   function hideAll() {
     Object.values(mediaElements).forEach(el => {
       if (el) el.classList.add('hidden');
@@ -433,18 +343,18 @@
     agentBubble.style.animation = 'popIn 0.3s ease';
   }
 
-  // ========== 需求 & 完成 ==========
   function showNeed(need) {
-    if (need === 'milk') {
-      showMedia('hungry');
-      setBubble('喵～我饿了，想喝奶🍼');
-      playVoice('voice-hungry-alert.mp3');
-    } else if (need === 'ball') {
-      showMedia('normal');
-      setBubble('喵～我好无聊，想玩球🎾');
-      playVoice('voice-bored-alert.mp3');
+    if (need === 'milk' || need === 'ball') {
+      showMedia('needPlay');
+      if (need === 'milk') {
+        setBubble('喵～我饿了，想喝奶🍼');
+        playVoice('voice-hungry-alert.mp3');
+      } else {
+        setBubble('喵～我好无聊，想玩球🎾');
+        playVoice('voice-bored-alert.mp3');
+      }
     } else if (need === 'blanket') {
-      showMedia('cold');
+      showMedia('needWarm');
       setBubble('喵～我冷了，要小毯子🧣');
       playVoice('voice-cold-alert.mp3');
     }
@@ -460,7 +370,6 @@
     }
   }
 
-  // ========== 给物资 ==========
   function giveItem(item) {
     if (state.todayGiven[item]) {
       setBubble('已经给过啦～');
@@ -519,7 +428,6 @@
     };
   }
 
-  // ========== UI 更新 ==========
   function updateButtons() {
     document.getElementById('btnMilk').disabled = state.todayGiven.milk;
     document.getElementById('btnBall').disabled = state.todayGiven.ball;
@@ -549,7 +457,6 @@
     showCurrentState();
   }
 
-  // ========== 初始化 ==========
   function init() {
     loadState();
     updateProgress();
