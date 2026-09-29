@@ -65,6 +65,40 @@
   }
   .cat-media.hidden { display: none; }
 
+  /* 加载提示 */
+  .loading-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, #fef5e7 0%, #f0e0c8 100%);
+    z-index: 10;
+    transition: opacity 0.4s ease;
+  }
+  .loading-overlay.hide {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .loading-spinner {
+    width: 44px;
+    height: 44px;
+    border: 4px solid #fde68a;
+    border-top-color: #f59e0b;
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .loading-text {
+    margin-top: 12px;
+    color: #92400e;
+    font-size: 13px;
+    font-weight: bold;
+  }
+
   .agent-area {
     position: fixed;
     top: 24px;
@@ -115,7 +149,6 @@
     to { opacity: 1; transform: scale(1); }
   }
 
-  /* 小仙女（PNG 版） */
   .agent-robot {
     width: 72px;
     height: 82px;
@@ -194,7 +227,7 @@
 <div class="agent-area">
   <div class="agent-bubble" id="agentBubble">喵～小橘在睡觉呢～</div>
   <div class="agent-robot">
-    <img src="fairy.png" alt="小仙女">
+    <img src="https://cdn.jsdelivr.net/gh/anna6444/cat-preview@main/fairy.png" alt="小仙女">
   </div>
 </div>
 
@@ -206,26 +239,32 @@
   </div>
 
   <div class="cat-scene">
-    <video id="vidNormal" class="cat-media" autoplay muted loop playsinline webkit-playsinline>
-      <source src="cat-normal.mp4" type="video/mp4">
+    <!-- 加载提示 -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">🐾 猫咪正在赶来...</div>
+    </div>
+
+    <video id="vidNormal" class="cat-media" autoplay muted loop playsinline webkit-playsinline preload="metadata">
+      <source src="https://cdn.jsdelivr.net/gh/anna6444/cat-preview@main/cat-normal.mp4" type="video/mp4">
     </video>
-    <video id="vidDrink" class="cat-media hidden" autoplay muted playsinline webkit-playsinline>
-      <source src="cat-drink.mp4" type="video/mp4">
+    <video id="vidDrink" class="cat-media hidden" autoplay muted playsinline webkit-playsinline preload="metadata">
+      <source src="https://cdn.jsdelivr.net/gh/anna6444/cat-preview@main/cat-drink.mp4" type="video/mp4">
     </video>
-    <video id="vidPlay" class="cat-media hidden" autoplay muted playsinline webkit-playsinline>
-      <source src="cat-play.mp4" type="video/mp4">
+    <video id="vidPlay" class="cat-media hidden" autoplay muted playsinline webkit-playsinline preload="metadata">
+      <source src="https://cdn.jsdelivr.net/gh/anna6444/cat-preview@main/cat-play.mp4" type="video/mp4">
     </video>
-    <video id="vidBlanket" class="cat-media hidden" autoplay muted playsinline webkit-playsinline>
-      <source src="cat-blanket.mp4" type="video/mp4">
+    <video id="vidBlanket" class="cat-media hidden" autoplay muted playsinline webkit-playsinline preload="metadata">
+      <source src="https://cdn.jsdelivr.net/gh/anna6444/cat-preview@main/cat-blanket.mp4" type="video/mp4">
     </video>
-    <video id="vidNeedPlay" class="cat-media hidden" autoplay muted loop playsinline webkit-playsinline>
-      <source src="cat-need.mp4" type="video/mp4">
+    <video id="vidNeedPlay" class="cat-media hidden" autoplay muted loop playsinline webkit-playsinline preload="metadata">
+      <source src="https://cdn.jsdelivr.net/gh/anna6444/cat-preview@main/cat-need.mp4" type="video/mp4">
     </video>
-    <video id="vidNeedWarm" class="cat-media hidden" autoplay muted loop playsinline webkit-playsinline>
-      <source src="cat-cold.mp4" type="video/mp4">
+    <video id="vidNeedWarm" class="cat-media hidden" autoplay muted loop playsinline webkit-playsinline preload="metadata">
+      <source src="https://cdn.jsdelivr.net/gh/anna6444/cat-preview@main/cat-cold.mp4" type="video/mp4">
     </video>
-    <video id="vidLevelUp" class="cat-media hidden" autoplay muted playsinline webkit-playsinline>
-      <source src="cat-levelup.mp4" type="video/mp4">
+    <video id="vidLevelUp" class="cat-media hidden" autoplay muted playsinline webkit-playsinline preload="metadata">
+      <source src="https://cdn.jsdelivr.net/gh/anna6444/cat-preview@main/cat-levelup.mp4" type="video/mp4">
     </video>
   </div>
 
@@ -239,6 +278,9 @@
 </div>
 
 <script>
+  // ========== CDN 路径（用 jsDelivr 加速，国内访问更快） ==========
+  const CDN = 'https://cdn.jsdelivr.net/gh/anna6444/cat-preview@main/';
+
   let soundEnabled = true;
   let currentAudio = null;
   let audioPlaying = false;
@@ -304,6 +346,7 @@
   const agentBubble = document.getElementById('agentBubble');
   const soundToggle = document.getElementById('soundToggle');
   const progressText = document.getElementById('progressText');
+  const loadingOverlay = document.getElementById('loadingOverlay');
   const mediaElements = {
     normal: document.getElementById('vidNormal'),
     drink: document.getElementById('vidDrink'),
@@ -320,7 +363,7 @@
     if (currentAudio) {
       try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(e){}
     }
-    currentAudio = new Audio(src);
+    currentAudio = new Audio(CDN + src);
     audioPlaying = true;
     currentAudio.onended = () => { audioPlaying = false; };
     currentAudio.onerror = () => { audioPlaying = false; };
@@ -416,7 +459,6 @@
 
     videoEl.onended = () => {
       if (isTodayComplete()) {
-        // 当天 3 个物资都给完了 → 提升亲密度
         const today = getTodayStr();
         const isFirstCompleteToday = (state.lastCompleteDate !== today);
         
@@ -427,9 +469,7 @@
           updateProgress();
         }
 
-        // 判断是否达到 5 天升级条件
         if (state.consecutiveDays >= 5) {
-          // 升级：播放升级视频
           hideAll();
           const vidLevelUp = mediaElements.levelup;
           vidLevelUp.classList.remove('hidden');
@@ -441,7 +481,6 @@
           vidLevelUp.onended = () => {
             showMedia('normal');
             setBubble('喵～今天都完成啦，晚安～');
-            // 升级后归零，开始新一轮 5 天
             state.consecutiveDays = 0;
             saveState();
             updateProgress();
@@ -450,13 +489,11 @@
             }, 500);
           };
         } else {
-          // 普通完成当天：播放亲密度提升语音
           playVoice('voice-level-up.mp3');
           setBubble('❤️ 亲密度 +1！');
           showMedia('normal');
         }
       } else {
-        // 还有物资没给，显示下一个需求
         showNeed(getNextNeed());
       }
     };
@@ -517,6 +554,19 @@
     unlockMedia();
     document.removeEventListener('click', unlock);
   }, { once: true });
+
+  // ========== 隐藏加载提示（等首屏视频能播放时） ==========
+  const firstVideo = mediaElements.normal;
+  function hideLoading() {
+    if (loadingOverlay) loadingOverlay.classList.add('hide');
+  }
+
+  // 视频可以播放时隐藏 loading
+  firstVideo.addEventListener('canplay', hideLoading);
+  firstVideo.addEventListener('playing', hideLoading);
+
+  // 保险：最多 6 秒后也隐藏
+  setTimeout(hideLoading, 6000);
 
   init();
 </script>
