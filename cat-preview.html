@@ -115,7 +115,6 @@
     to { opacity: 1; transform: scale(1); }
   }
 
-  /* ========== 小仙女（PNG 版） ========== */
   .agent-robot {
     width: 72px;
     height: 82px;
@@ -224,6 +223,9 @@
     <video id="vidNeedWarm" class="cat-media hidden" autoplay muted loop playsinline webkit-playsinline>
       <source src="cat-cold.mp4" type="video/mp4">
     </video>
+    <video id="vidLevelUp" class="cat-media hidden" autoplay muted playsinline webkit-playsinline>
+      <source src="cat-levelup.mp4" type="video/mp4">
+    </video>
   </div>
 
   <div class="controls">
@@ -279,8 +281,16 @@
     } catch(e) { console.warn('保存状态失败', e); }
   }
 
+  function getGivenCount() {
+    let count = 0;
+    if (state.todayGiven.milk) count++;
+    if (state.todayGiven.ball) count++;
+    if (state.todayGiven.blanket) count++;
+    return count;
+  }
+
   function isTodayComplete() {
-    return state.todayGiven.milk && state.todayGiven.ball && state.todayGiven.blanket;
+    return getGivenCount() === 3;
   }
 
   function getNextNeed() {
@@ -299,7 +309,8 @@
     play: document.getElementById('vidPlay'),
     blanket: document.getElementById('vidBlanket'),
     needPlay: document.getElementById('vidNeedPlay'),
-    needWarm: document.getElementById('vidNeedWarm')
+    needWarm: document.getElementById('vidNeedWarm'),
+    levelup: document.getElementById('vidLevelUp')
   };
 
   function playVoice(src) {
@@ -363,8 +374,7 @@
   function showCurrentState() {
     if (isTodayComplete()) {
       showMedia('normal');
-      setBubble('喵～今天任务都完成啦，晚安～');
-      playVoice('voice-all-done.mp3');
+      setBubble('喵～今天都完成啦，晚安～');
     } else {
       showNeed(getNextNeed());
     }
@@ -405,24 +415,47 @@
 
     videoEl.onended = () => {
       if (isTodayComplete()) {
+        // ========== 当天 3 个物资都给完了 → 提升亲密度 ==========
         const today = getTodayStr();
-        if (state.lastCompleteDate !== today) {
+        const isFirstCompleteToday = (state.lastCompleteDate !== today);
+        
+        if (isFirstCompleteToday) {
           state.consecutiveDays++;
           state.lastCompleteDate = today;
           saveState();
           updateProgress();
         }
 
-        showMedia('normal');
-        setBubble('喵～今天都完成啦，小橘好开心！');
-        playVoice('voice-all-done.mp3');
-
+        // 判断是否达到 5 天升级条件
         if (state.consecutiveDays >= 5) {
-          setTimeout(() => {
-            alert('🎉 恭喜！小橘长大了，可以升到下一级啦！');
-          }, 1500);
+          // 🎉 升级：播放升级视频
+          hideAll();
+          const vidLevelUp = mediaElements.levelup;
+          vidLevelUp.classList.remove('hidden');
+          vidLevelUp.currentTime = 0;
+          vidLevelUp.play().catch(e => console.log('升级视频播放失败', e));
+          setBubble('🎉 小橘长大啦！');
+          playVoice('voice-level-up.mp3');
+
+          vidLevelUp.onended = () => {
+            showMedia('normal');
+            setBubble('喵～今天都完成啦，晚安～');
+            // 升级后归零，开始新一轮 5 天
+            state.consecutiveDays = 0;
+            saveState();
+            updateProgress();
+            setTimeout(() => {
+              alert('🎉 恭喜！小橘长大了，可以升到下一级啦！');
+            }, 500);
+          };
+        } else {
+          // 普通完成当天：播放升级/亲密度语音
+          playVoice('voice-level-up.mp3');
+          setBubble('❤️ 亲密度 +1！');
+          showMedia('normal');
         }
       } else {
+        // 还有物资没给，显示下一个需求
         showNeed(getNextNeed());
       }
     };
