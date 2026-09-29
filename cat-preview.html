@@ -115,6 +115,7 @@
     to { opacity: 1; transform: scale(1); }
   }
 
+  /* 小仙女（PNG 版） */
   .agent-robot {
     width: 72px;
     height: 82px;
@@ -415,7 +416,7 @@
 
     videoEl.onended = () => {
       if (isTodayComplete()) {
-        // ========== 当天 3 个物资都给完了 → 提升亲密度 ==========
+        // 当天 3 个物资都给完了 → 提升亲密度
         const today = getTodayStr();
         const isFirstCompleteToday = (state.lastCompleteDate !== today);
         
@@ -428,7 +429,7 @@
 
         // 判断是否达到 5 天升级条件
         if (state.consecutiveDays >= 5) {
-          // 🎉 升级：播放升级视频
+          // 升级：播放升级视频
           hideAll();
           const vidLevelUp = mediaElements.levelup;
           vidLevelUp.classList.remove('hidden');
@@ -449,7 +450,7 @@
             }, 500);
           };
         } else {
-          // 普通完成当天：播放升级/亲密度语音
+          // 普通完成当天：播放亲密度提升语音
           playVoice('voice-level-up.mp3');
           setBubble('❤️ 亲密度 +1！');
           showMedia('normal');
@@ -497,13 +498,23 @@
     showCurrentState();
   }
 
+  // ========== 首次点击解锁：播放当前屏幕上显示的视频 ==========
+  function unlockMedia() {
+    const visibleMedia = document.querySelector('.cat-media:not(.hidden)');
+    if (visibleMedia && visibleMedia.tagName === 'VIDEO') {
+      if (visibleMedia.paused) {
+        visibleMedia.play().catch(e => console.log('解锁后播放失败', e));
+      }
+    }
+  }
+
   document.addEventListener('touchstart', function unlock() {
-    if (mediaElements.normal) mediaElements.normal.play().catch(() => {});
+    unlockMedia();
     document.removeEventListener('touchstart', unlock);
   }, { once: true, passive: true });
 
   document.addEventListener('click', function unlock() {
-    if (mediaElements.normal) mediaElements.normal.play().catch(() => {});
+    unlockMedia();
     document.removeEventListener('click', unlock);
   }, { once: true });
 
