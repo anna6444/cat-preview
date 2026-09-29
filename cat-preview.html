@@ -32,6 +32,20 @@
     color: #4b7f23;
     margin: 10px 0;
   }
+  .progress-bar {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 14px;
+    padding: 8px 12px;
+    margin: 8px 0;
+    font-size: 14px;
+    color: #92400e;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .progress-bar .heart { font-size: 16px; }
   .cat-scene {
     position: relative;
     width: 100%;
@@ -52,6 +66,7 @@
   }
   .cat-media.hidden { display: none; }
 
+  /* 智能体 */
   .agent-area {
     position: fixed;
     top: 24px;
@@ -101,7 +116,6 @@
     from { opacity: 0; transform: scale(0.85); }
     to { opacity: 1; transform: scale(1); }
   }
-
   .agent-robot {
     width: 64px;
     height: 72px;
@@ -157,10 +171,20 @@
     transition: transform 0.1s;
   }
   .btn:active { transform: scale(0.95); }
-  .btn-normal { background: #e5e7eb; color: #333; }
-  .btn-drink { background: #dcfce7; color: #15803d; }
-  .btn-play { background: #fef3c7; color: #92400e; }
-  .btn-blanket { background: #fffbeb; color: #92400e; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-milk { background: #dcfce7; color: #15803d; }
+  .btn-ball { background: #fef3c7; color: #92400e; }
+  .btn-blanket { background: #dbeafe; color: #1d4ed8; }
+  .btn-reset {
+    padding: 6px 12px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    background: transparent;
+    font-size: 12px;
+    color: #94a3b8;
+    cursor: pointer;
+    margin-top: 10px;
+  }
 </style>
 </head>
 <body>
@@ -193,8 +217,12 @@
 
 <div class="card">
   <div class="cat-title">我的猫「小橘」</div>
+  <div class="progress-bar">
+    <span>❤️ 亲密度</span>
+    <span id="progressText">0 / 5</span>
+  </div>
 
-  <div class="cat-scene" id="catScene">
+  <div class="cat-scene">
     <video id="vidNormal" class="cat-media" autoplay muted loop playsinline webkit-playsinline>
       <source src="cat-normal.mp4" type="video/mp4">
     </video>
@@ -207,87 +235,229 @@
     <video id="vidBlanket" class="cat-media hidden" autoplay muted playsinline webkit-playsinline>
       <source src="cat-blanket.mp4" type="video/mp4">
     </video>
+    <img id="imgHungry" class="cat-media hidden" src="cat-stage-1-hungry.png" alt="饿了">
+    <img id="imgCold" class="cat-media hidden" src="cat-stage-1-cold.png" alt="冷了">
   </div>
 
   <div class="controls">
-    <button class="btn btn-normal" onclick="setCatState('normal')">😴 正常</button>
-    <button class="btn btn-drink" onclick="setCatState('drink')">🥛 喝奶</button>
-    <button class="btn btn-play" onclick="setCatState('play')">🎾 玩球</button>
-    <button class="btn btn-blanket" onclick="setCatState('blanket')">🛌 裹毯子</button>
+    <button class="btn btn-milk" id="btnMilk" onclick="giveItem('milk')">🥛 给奶</button>
+    <button class="btn btn-ball" id="btnBall" onclick="giveItem('ball')">🎾 给球</button>
+    <button class="btn btn-blanket" id="btnBlanket" onclick="giveItem('blanket')">🛌 给毯子</button>
   </div>
+
+  <button class="btn-reset" onclick="resetToday()">🔄 重置今天（测试用）</button>
 </div>
 
 <script>
-  const agentBubble = document.getElementById('agentBubble');
-  const soundToggle = document.getElementById('soundToggle');
+  // ========== 状态 ==========
   let soundEnabled = true;
   let currentAudio = null;
-  let audioPlaying = false;       // 音频播放锁
-  let lastVoiceState = null;      // 上次播放音频的状态
+  let audioPlaying = false;
 
+  const STORAGE_KEY = 'catState_v1';
+  let state = {
+    today: '',
+    todayGiven: { milk: false, ball: false, blanket: false },
+    consecutiveDays: 0,
+    lastCompleteDate: ''
+  };
+
+  function getTodayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function loadState() {
+    state.today = getTodayStr();
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const s = JSON.parse(saved);
+        state.consecutiveDays = s.consecutiveDays || 0;
+        state.lastCompleteDate = s.lastCompleteDate || '';
+        if (s.today === state.today) {
+          state.todayGiven = s.todayGiven || { milk: false, ball: false, blanket: false };
+        }
+      }
+    } catch(e) { console.warn('读取状态失败', e); }
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        today: state.today,
+        todayGiven: state.todayGiven,
+        consecutiveDays: state.consecutiveDays,
+        lastCompleteDate: state.lastCompleteDate
+      }));
+    } catch(e) { console.warn('保存状态失败', e); }
+  }
+
+  function isTodayComplete() {
+    return state.todayGiven.milk && state.todayGiven.ball && state.todayGiven.blanket;
+  }
+
+  function getNextNeed() {
+    if (!state.todayGiven.milk) return 'milk';
+    if (!state.todayGiven.ball) return 'ball';
+    if (!state.todayGiven.blanket) return 'blanket';
+    return null;
+  }
+
+  // ========== 元素 ==========
+  const agentBubble = document.getElementById('agentBubble');
+  const soundToggle = document.getElementById('soundToggle');
+  const progressText = document.getElementById('progressText');
   const mediaElements = {
     normal: document.getElementById('vidNormal'),
     drink: document.getElementById('vidDrink'),
     play: document.getElementById('vidPlay'),
-    blanket: document.getElementById('vidBlanket')
+    blanket: document.getElementById('vidBlanket'),
+    hungry: document.getElementById('imgHungry'),
+    cold: document.getElementById('imgCold')
   };
 
-  const stateTexts = {
-    normal: '喵～小橘在睡觉呢～',
-    drink: '咕嘟咕嘟～好喝！',
-    play: '喵呜～球球真好玩！',
-    blanket: '暖暖的，好舒服～'
-  };
-
-  const voiceMap = {
-    normal: 'voice-rest-alert.mp3',
-    drink: 'voice-thanks-milk.mp3',
-    play: 'voice-bored-alert.mp3',
-    blanket: 'voice-thanks-blanket.mp3'
-  };
-
-  // ================= 播放音频（加锁）=================
-  function playVoiceForState(state) {
+  // ========== 音频 ==========
+  function playVoice(src) {
     if (!soundEnabled) return;
-    const audioSrc = voiceMap[state];
-    if (!audioSrc) return;
-
-    // 【关键】音频正在播放中，不打断
-    if (audioPlaying) {
-      console.log('音频正在播放中，跳过本次播放');
-      return;
-    }
-
-    // 同一个状态不重复播放（防止视频 onended 后回到 normal 又播一次）
-    if (lastVoiceState === state && currentAudio && !currentAudio.paused) {
-      return;
-    }
-
+    if (audioPlaying) return;
     if (currentAudio) {
       try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(e){}
     }
-
-    currentAudio = new Audio(audioSrc);
-    lastVoiceState = state;
+    currentAudio = new Audio(src);
     audioPlaying = true;
     currentAudio.onended = () => { audioPlaying = false; };
     currentAudio.onerror = () => { audioPlaying = false; };
-
     currentAudio.play().catch(e => {
       audioPlaying = false;
-      console.log('音频播放失败:', audioSrc, e);
+      console.log('音频播放失败:', src, e);
     });
   }
 
-  // ================= 播放视频 =================
-  function playVideoSafely(videoEl) {
-    if (!videoEl) return;
-    try {
-      const p = videoEl.play();
-      if (p && p.catch) {
-        p.catch(e => console.log('视频自动播放被阻止', e));
+  // ========== 显示控制 ==========
+  function hideAll() {
+    Object.values(mediaElements).forEach(el => {
+      if (el) el.classList.add('hidden');
+    });
+  }
+
+  function showMedia(type) {
+    hideAll();
+    const el = mediaElements[type];
+    if (!el) return;
+    el.classList.remove('hidden');
+    if (el.tagName === 'VIDEO') {
+      el.currentTime = 0;
+      el.onended = null;
+      el.play().catch(e => console.log('视频播放失败', e));
+    }
+  }
+
+  function setBubble(text) {
+    agentBubble.innerText = text;
+    agentBubble.style.animation = 'none';
+    void agentBubble.offsetWidth;
+    agentBubble.style.animation = 'popIn 0.3s ease';
+  }
+
+  // ========== 需求 & 完成 ==========
+  function showNeed(need) {
+    if (need === 'milk') {
+      showMedia('hungry');
+      setBubble('喵～我饿了，想喝奶🍼');
+      playVoice('voice-hungry-alert.mp3');
+    } else if (need === 'ball') {
+      showMedia('normal');
+      setBubble('喵～我好无聊，想玩球🎾');
+      playVoice('voice-bored-alert.mp3');
+    } else if (need === 'blanket') {
+      showMedia('cold');
+      setBubble('喵～我冷了，要小毯子🧣');
+      playVoice('voice-cold-alert.mp3');
+    }
+  }
+
+  function showCurrentState() {
+    if (isTodayComplete()) {
+      showMedia('normal');
+      setBubble('喵～今天任务都完成啦，晚安～');
+      playVoice('voice-all-done.mp3');
+    } else {
+      showNeed(getNextNeed());
+    }
+  }
+
+  // ========== 给物资 ==========
+  function giveItem(item) {
+    if (state.todayGiven[item]) {
+      setBubble('已经给过啦～');
+      return;
+    }
+
+    state.todayGiven[item] = true;
+    saveState();
+    updateButtons();
+
+    // 播放感谢视频 + 语音
+    let videoEl, voiceSrc, bubbleText;
+    if (item === 'milk') {
+      videoEl = mediaElements.drink;
+      voiceSrc = 'voice-thanks-milk.mp3';
+      bubbleText = '咕嘟咕嘟～好喝！';
+    } else if (item === 'ball') {
+      videoEl = mediaElements.play;
+      voiceSrc = 'voice-thanks-ball.mp3';
+      bubbleText = '喵呜～球球真好玩！';
+    } else if (item === 'blanket') {
+      videoEl = mediaElements.blanket;
+      voiceSrc = 'voice-thanks-blanket.mp3';
+      bubbleText = '暖暖的，好舒服～';
+    }
+
+    hideAll();
+    videoEl.classList.remove('hidden');
+    videoEl.currentTime = 0;
+    videoEl.onended = null;
+    videoEl.play().catch(e => console.log('视频失败', e));
+    setBubble(bubbleText);
+    playVoice(voiceSrc);
+
+    // 视频播完 → 显示下一个需求
+    videoEl.onended = () => {
+      if (isTodayComplete()) {
+        // 今天完成！计算连续天数
+        const today = getTodayStr();
+        if (state.lastCompleteDate !== today) {
+          state.consecutiveDays++;
+          state.lastCompleteDate = today;
+          saveState();
+          updateProgress();
+        }
+
+        showMedia('normal');
+        setBubble('喵～今天都完成啦，小橘好开心！');
+        playVoice('voice-all-done.mp3');
+
+        if (state.consecutiveDays >= 5) {
+          setTimeout(() => {
+            alert('🎉 恭喜！小橘长大了，可以升到下一级啦！');
+          }, 1500);
+        }
+      } else {
+        showNeed(getNextNeed());
       }
-    } catch(e) { console.log('视频播放异常', e); }
+    };
+  }
+
+  // ========== UI 更新 ==========
+  function updateButtons() {
+    document.getElementById('btnMilk').disabled = state.todayGiven.milk;
+    document.getElementById('btnBall').disabled = state.todayGiven.ball;
+    document.getElementById('btnBlanket').disabled = state.todayGiven.blanket;
+  }
+
+  function updateProgress() {
+    progressText.innerText = state.consecutiveDays + ' / 5';
   }
 
   function toggleSound() {
@@ -299,78 +469,36 @@
     }
   }
 
-  function pauseAllVideos() {
-    Object.values(mediaElements).forEach(el => {
-      if (el && el.tagName === 'VIDEO') {
-        el.pause();
-        el.currentTime = 0;
-        el.onended = null;
-      }
-    });
+  function resetToday() {
+    if (!confirm('确定重置今天的状态吗？（测试用）')) return;
+    state.todayGiven = { milk: false, ball: false, blanket: false };
+    state.lastCompleteDate = '';
+    saveState();
+    updateButtons();
+    updateProgress();
+    showCurrentState();
   }
 
-  function setCatState(state) {
-    // 1. 隐藏所有
-    Object.values(mediaElements).forEach(el => {
-      if (el) el.classList.add('hidden');
-    });
-
-    // 2. normal 时暂停其他视频
-    if (state === 'normal') {
-      pauseAllVideos();
-    }
-
-    // 3. 显示目标
-    const target = mediaElements[state];
-    if (target) {
-      target.classList.remove('hidden');
-      if (target.tagName === 'VIDEO') {
-        target.onended = null;
-        playVideoSafely(target);
-
-        // 【关键】视频播完后，只切换视频，不重新播放音频
-        if (state === 'drink' || state === 'play' || state === 'blanket') {
-          target.onended = function() {
-            // 只切换显示，不调用 setCatState（避免播放音频）
-            Object.values(mediaElements).forEach(el => {
-              if (el) el.classList.add('hidden');
-            });
-            mediaElements.normal.classList.remove('hidden');
-            playVideoSafely(mediaElements.normal);
-
-            // 更新气泡为"正常"的文案（但不播放音频）
-            agentBubble.innerText = stateTexts.normal;
-            lastVoiceState = null; // 重置，下次点击 normal 才播放音频
-          };
-        }
-      }
-    }
-
-    // 4. 更新气泡 + 播放音频
-    if (stateTexts[state]) {
-      const text = stateTexts[state];
-      agentBubble.innerText = text;
-      agentBubble.style.animation = 'none';
-      void agentBubble.offsetWidth;
-      agentBubble.style.animation = 'popIn 0.3s ease';
-      playVoiceForState(state);
-    }
+  // ========== 初始化 ==========
+  function init() {
+    loadState();
+    updateProgress();
+    updateButtons();
+    showCurrentState();
   }
 
   // 首次点击解锁
   document.addEventListener('touchstart', function unlock() {
-    playVideoSafely(mediaElements.normal);
+    if (mediaElements.normal) mediaElements.normal.play().catch(() => {});
     document.removeEventListener('touchstart', unlock);
   }, { once: true, passive: true });
 
   document.addEventListener('click', function unlock() {
-    playVideoSafely(mediaElements.normal);
+    if (mediaElements.normal) mediaElements.normal.play().catch(() => {});
     document.removeEventListener('click', unlock);
   }, { once: true });
 
-  window.addEventListener('load', () => {
-    setTimeout(() => playVideoSafely(mediaElements.normal), 300);
-  });
+  init();
 </script>
 
 </body>
